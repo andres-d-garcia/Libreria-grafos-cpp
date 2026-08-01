@@ -1,51 +1,67 @@
-# Checklist — Librería de Grafos C++
+# Checklist — Librería de Grafos C++ (Pareja)
 
-## Planificación
-- [ ] Revisar el proyecto de árboles anterior y replicar su estructura/entregables
-- [ ] Decidir estructura: librería *header-only* (`.hpp`) de "incluir y usar"
+Leyenda:
+- **[P1]** — Programador 1
+- **[P2]** — Programador 2
+- **[Ambos]** — tarea compartida
 
-## Núcleo de la librería
-- [ ] Implementación con plantillas `template <typename T>` para cualquier tipo de dato
-- [ ] Versión con **lista de adyacencia**
-- [ ] Versión con **matriz de adyacencia**
-- [ ] API común en ambas (misma interfaz para el usuario)
+## 1. Planificación
+- [x] 1.1 Revisar el proyecto de árboles anterior y replicar su estructura/entregables
+- [x] 1.2 Decidir estructura: librería *header-only* (`.hpp`) de "incluir y usar"
+- [x] 1.3 Todo en un **único `grafo.hpp`**; solo `<iostream>` como librería externa; sin contenedores STL (ni siquiera `std::vector`)
 
-## Operaciones básicas
+## 2. Estructuras base manuales (en `grafo.hpp`, sin contenedores STL)
+- [x] **[Ambos]** Errores y validación comunes (out of bounds, vértices/aristas inexistentes)
+- [x] **[P2]** `Lista<T>`: lista enlazada simple (agregar, eliminar, buscar, recorrer)
+- [x] **[P2]** `Cola<T>` y `Pila<T>` propias (para BFS/DFS)
+
+## 3. API común
+- [ ] **[Ambos]** Definir `GrafoBase<T>`: misma interfaz para ambas implementaciones
+
+## 4. Grafo con lista de adyacencia — [P1]
+- [ ] Estructura: `NodoVertice` con lista enlazada de `NodoArista` (punteros y `new`/`delete`)
 - [ ] Agregar/eliminar vértice
-- [ ] Agregar/eliminar arista (dirigida y no dirigida)
-- [ ] Soporte para aristas ponderadas y no ponderadas
-- [ ] Consultar vecinos, grado, número de vértices/aristas
+- [ ] Agregar/eliminar arista (dirigida y no dirigida, ponderada y no ponderada)
+- [ ] Consultas: vecinos, grado, número de vértices/aristas
+- [ ] Robustez: validaciones y casos límite
 
-## Algoritmos de recorrido
-- [ ] BFS (amplitud)
-- [ ] DFS (profundidad)
+## 5. Grafo con matriz de adyacencia — [P2]
+- [ ] Estructura: **matriz dispersa enlazada** (lista de filas, cada fila con lista de celdas `{columna, peso}`; sin arreglos)
+- [ ] Agregar/eliminar vértice (manteniendo la matriz consistente)
+- [ ] Agregar/eliminar arista (dirigida y no dirigida, ponderada y no ponderada)
+- [ ] Consultas: vecinos, grado, número de vértices/aristas
+- [ ] Robustez: validaciones y casos límite
 
-## Camino más corto
-- [ ] BFS para grafos no ponderados
-- [ ] Dijkstra
-- [ ] Bellman-Ford (aristas negativas)
-- [ ] Floyd-Warshall (todos los pares)
+## 6. Algoritmos de recorrido
+- [ ] **[P1]** BFS (amplitud)
+- [ ] **[P1]** DFS (profundidad)
+- [ ] **[P1]** Detección de ciclos
 
-## Otras funciones relevantes
-- [ ] Detección de ciclos
-- [ ] Verificación de conectividad / componentes conexas
-- [ ] Grafo conectado o fuertemente conexo
-- [ ] Orden topológico (si aplica)
-- [ ] Árbol de expansión mínima (Kruskal/Prim) — opcional
+## 7. Camino más corto
+- [ ] **[P2]** BFS para grafos no ponderados
+- [ ] **[P2]** Dijkstra
+- [ ] **[P2]** Bellman-Ford (aristas negativas)
+- [ ] **[Ambos]** Floyd-Warshall (todos los pares)
 
-## Robustez / resistencia a fallos
+## 8. Otras funciones relevantes
+- [ ] **[P1]** Verificación de conectividad / componentes conexas
+- [ ] **[P2]** Grafo conectado o fuertemente conexo
+- [ ] **[P2]** Orden topológico (si aplica)
+- [ ] **[P1]** Árbol de expansión mínima (Kruskal/Prim) — opcional
+
+## 9. Robustez / resistencia a fallos
 - [ ] Validación de índices fuera de rango (out of bounds)
 - [ ] Manejo de aristas/vértices inexistentes
 - [ ] Detección de overflow en pesos/sumas
-- [ ] Uso seguro de memoria (sin fugas, manejo de `new`/`delete` o RAII)
+- [ ] Uso seguro de memoria (`new`/`delete` balanceados, sin fugas)
 - [ ] Pruebas con casos límite (grafo vacío, 1 nodo, nodos desconectados)
 
-## Pruebas y verificación
+## 10. Pruebas y verificación
 - [ ] Programa de prueba/demo en `main.cpp`
 - [ ] Test cases de cada algoritmo y de cada implementación
-- [ ] Compilar sin warnings y correr con detectores (ej. `-fsanitize=address,undefined` en GCC/Clang)
+- [ ] Compilar sin warnings (con `-fsanitize=address,undefined` si el toolchain lo permite)
 
-## Documentación y entrega
+## 11. Documentación y entrega
 - [ ] `README.md` con ejemplos de uso ("incluir y usar")
 - [ ] Comentarios/doxygen en la API
 - [ ] Commits con formato **Conventional Commits** (ej. `feat: add adjacency list`, `fix: validate out of bounds`)
