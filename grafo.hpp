@@ -372,6 +372,78 @@ public:
     // Retorna una Lista<T> (nuestra estructura manual) con los vértices adyacentes
     virtual Lista<T> obtenerVecinos(const T& vertice) const = 0;
 };
+
+// ---- GrafoLista<T>: Implementación mediante Lista de Adyacencia ------------
+
+template <typename T>
+class GrafoLista : public GrafoBase<T> {
+private:
+    // Nodo para representar cada conexión (arista)
+    struct NodoArista {
+        T destino;
+        double peso;
+        NodoArista* siguiente;
+
+        NodoArista(const T& dest, double p, NodoArista* sig = nullptr)
+            : destino(dest), peso(p), siguiente(sig) {}
+    };
+
+    // Nodo para representar cada vértice del grafo
+    struct NodoVertice {
+        T dato;
+        NodoArista* aristas;     // Puntero a la sub-lista de adyacencia
+        NodoVertice* siguiente;  // Puntero al siguiente vértice en la lista principal
+
+        NodoVertice(const T& d, NodoVertice* sig = nullptr)
+            : dato(d), aristas(nullptr), siguiente(sig) {}
+    };
+
+    NodoVertice* cabeza_vertices_; // Inicio de la lista enlazada de vértices
+    int num_vertices_cache;        // Contadores para hacer numVertices() O(1)
+    int num_aristas_cache;         // Contadores para hacer numAristas() O(1)
+
+    // Método auxiliar privado para buscar un vértice
+    NodoVertice* buscarVertice(const T& vertice) const {
+        NodoVertice* actual = cabeza_vertices_;
+        while (actual != nullptr) {
+            if (actual->dato == vertice) return actual;
+            actual = actual->siguiente;
+        }
+        return nullptr;
+    }
+
+public:
+    // Constructor
+    GrafoLista() : cabeza_vertices_(nullptr), num_vertices_cache(0), num_aristas_cache(0) {}
+
+    // Destructor (Falta implementar la limpieza de memoria)
+    ~GrafoLista() override {
+        limpiarMemoria();
+    }
+
+    // Método para vaciar el grafo y liberar memoria
+    void limpiarMemoria() {
+        NodoVertice* actualV = cabeza_vertices_;
+        while (actualV != nullptr) {
+            // 1. Borrar todas las aristas del vértice actual
+            NodoArista* actualA = actualV->aristas;
+            while (actualA != nullptr) {
+                NodoArista* aBorrar = actualA;
+                actualA = actualA->siguiente;
+                delete aBorrar;
+            }
+            // 2. Borrar el vértice en sí
+            NodoVertice* vBorrar = actualV;
+            actualV = actualV->siguiente;
+            delete vBorrar;
+        }
+        cabeza_vertices_ = nullptr;
+        num_vertices_cache = 0;
+        num_aristas_cache = 0;
+    }
+
+    
+};
 }  // namespace grafo
 
 #endif  // GRAFO_HPP
