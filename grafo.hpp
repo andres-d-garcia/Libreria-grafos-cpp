@@ -343,6 +343,35 @@ private:
     size_t tam_;
 };
 
+// ---- GrafoBase<T>: Interfaz común para todas las implementaciones -----------
+
+template <typename T>
+class GrafoBase {
+public:
+    virtual ~GrafoBase() {}
+
+    // --- Modificadores ---
+    virtual void agregarVertice(const T& vertice) = 0;
+    virtual void eliminarVertice(const T& vertice) = 0;
+    
+    // Por defecto asume aristas no ponderadas (peso 1.0) y no dirigidas
+    virtual void agregarArista(const T& origen, const T& destino, double peso = 1.0, bool dirigida = false) = 0;
+    virtual void eliminarArista(const T& origen, const T& destino, bool dirigida = false) = 0;
+
+    // --- Consultas básicas ---
+    virtual bool existeVertice(const T& vertice) const = 0;
+    virtual bool existeArista(const T& origen, const T& destino) const = 0;
+    virtual double obtenerPeso(const T& origen, const T& destino) const = 0;
+
+    // --- Métricas ---
+    virtual int numVertices() const = 0;
+    virtual int numAristas() const = 0;
+    virtual int grado(const T& vertice) const = 0;
+
+    // --- Vecinos / Conexiones ---
+    // Retorna una Lista<T> (nuestra estructura manual) con los vértices adyacentes
+    virtual Lista<T> obtenerVecinos(const T& vertice) const = 0;
+};
 }  // namespace grafo
 
 #endif  // GRAFO_HPP
