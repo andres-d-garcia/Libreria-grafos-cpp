@@ -16,7 +16,7 @@ Leyenda:
 - [x] **[P2]** `Cola<T>` y `Pila<T>` propias (para BFS/DFS)
 
 ## 3. API común
-- [ ] **[Ambos]** Definir `GrafoBase<T>`: misma interfaz para ambas implementaciones
+- [x] **[Ambos]** Definir `GrafoBase<T>`: misma interfaz para ambas implementaciones
 
 ## 4. Grafo con lista de adyacencia — [P1]
 - [ ] Estructura: `NodoVertice` con lista enlazada de `NodoArista` (punteros y `new`/`delete`)
