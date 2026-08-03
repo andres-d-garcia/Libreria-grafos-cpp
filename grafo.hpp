@@ -411,7 +411,7 @@ private:
         }
         return nullptr;
     }
-    private:
+    
     // Auxiliar para insertar/actualizar una arista saliente
     void agregarAristaDirigida(NodoVertice* vOrigen, const T& destino, double peso) {
         NodoArista* actual = vOrigen->aristas;
@@ -446,6 +446,25 @@ private:
         }
         return false;
     }
+    void copiarDesde(const GrafoLista& otra) {
+        NodoVertice* currV = otra.cabeza_vertices_;
+        while (currV != nullptr) {
+            agregarVertice(currV->dato);
+            currV = currV->siguiente;
+        }
+
+        currV = otra.cabeza_vertices_;
+        while (currV != nullptr) {
+            NodoVertice* vOrigenNuevo = buscarVertice(currV->dato);
+            NodoArista* currA = currV->aristas;
+            while (currA != nullptr) {
+                agregarAristaDirigida(vOrigenNuevo, currA->destino, currA->peso);
+                currA = currA->siguiente;
+            }
+            currV = currV->siguiente;
+        }
+    }
+    public:
     // --- Consultas básicas ---
 
     bool existeVertice(const T& vertice) const override {
@@ -514,10 +533,20 @@ private:
         return vecinos;
     }
 
-public:
-
     // Constructor
     GrafoLista() : cabeza_vertices_(nullptr), num_vertices_cache(0), num_aristas_cache(0) {}
+    GrafoLista(const GrafoLista& otra)
+        : cabeza_vertices_(nullptr), num_vertices_cache(0), num_aristas_cache(0) {
+        copiarDesde(otra);
+    }
+
+    GrafoLista& operator=(const GrafoLista& otra) {
+        if (this != &otra) {
+            limpiarMemoria();
+            copiarDesde(otra);
+        }
+        return *this;
+    }
 
     // Destructor (Falta implementar la limpieza de memoria)
     ~GrafoLista() override {
