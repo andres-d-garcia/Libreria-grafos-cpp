@@ -411,6 +411,108 @@ private:
         }
         return nullptr;
     }
+    private:
+    // Auxiliar para insertar/actualizar una arista saliente
+    void agregarAristaDirigida(NodoVertice* vOrigen, const T& destino, double peso) {
+        NodoArista* actual = vOrigen->aristas;
+        while (actual != nullptr) {
+            if (actual->destino == destino) {
+                actual->peso = peso; // Si ya existe, actualizamos su peso
+                return;
+            }
+            actual = actual->siguiente;
+        }
+        // Si no existe, la agregamos al inicio de la sub-lista
+        vOrigen->aristas = new NodoArista(destino, peso, vOrigen->aristas);
+        ++num_aristas_cache;
+    }
+    bool eliminarAristaDirigida(NodoVertice* vOrigen, const T& destino) {
+        NodoArista* prev = nullptr;
+        NodoArista* curr = vOrigen->aristas;
+
+        while (curr != nullptr) {
+            if (curr->destino == destino) {
+                if (prev == nullptr) {
+                    vOrigen->aristas = curr->siguiente;
+                } else {
+                    prev->siguiente = curr->siguiente;
+                }
+                delete curr;
+                --num_aristas_cache;
+                return true;
+            }
+            prev = curr;
+            curr = curr->siguiente;
+        }
+        return false;
+    }
+    // --- Consultas básicas ---
+
+    bool existeVertice(const T& vertice) const override {
+        return buscarVertice(vertice) != nullptr;
+    }
+
+    bool existeArista(const T& origen, const T& destino) const override {
+        NodoVertice* vOrigen = buscarVertice(origen);
+        if (vOrigen == nullptr) return false;
+
+        NodoArista* actual = vOrigen->aristas;
+        while (actual != nullptr) {
+            if (actual->destino == destino) return true;
+            actual = actual->siguiente;
+        }
+        return false;
+    }
+
+    double obtenerPeso(const T& origen, const T& destino) const override {
+        NodoVertice* vOrigen = buscarVertice(origen);
+        if (vOrigen == nullptr) throw VerticeInexistente();
+
+        NodoArista* actual = vOrigen->aristas;
+        while (actual != nullptr) {
+            if (actual->destino == destino) return actual->peso;
+            actual = actual->siguiente;
+        }
+        throw VerticeInexistente();
+    }
+
+    // --- Métricas ---
+
+    int numVertices() const override {
+        return num_vertices_cache;
+    }
+
+    int numAristas() const override {
+        return num_aristas_cache;
+    }
+
+    int grado(const T& vertice) const override {
+        NodoVertice* vTarget = buscarVertice(vertice);
+        if (vTarget == nullptr) throw VerticeInexistente();
+
+        int g = 0;
+        NodoArista* actual = vTarget->aristas;
+        while (actual != nullptr) {
+            ++g;
+            actual = actual->siguiente;
+        }
+        return g;
+    }
+
+    // --- Vecinos / Conexiones ---
+
+    Lista<T> obtenerVecinos(const T& vertice) const override {
+        NodoVertice* vTarget = buscarVertice(vertice);
+        if (vTarget == nullptr) throw VerticeInexistente();
+
+        Lista<T> vecinos;
+        NodoArista* actual = vTarget->aristas;
+        while (actual != nullptr) {
+            vecinos.push_back(actual->destino);
+            actual = actual->siguiente;
+        }
+        return vecinos;
+    }
 
 public:
 
@@ -516,8 +618,45 @@ public:
         --num_vertices_cache;
     }
 
-    
+    // --- Modificadores de Aristas ---
+
+    void agregarArista(const T& origen, const T& destino, double peso = 1.0, bool dirigida = false) override {
+        validarPeso(peso);
+
+        NodoVertice* vOrigen = buscarVertice(origen);
+        NodoVertice* vDestino = buscarVertice(destino);
+
+        if (vOrigen == nullptr || vDestino == nullptr) {
+            throw VerticeInexistente();
+        }
+
+        agregarAristaDirigida(vOrigen, destino, peso);
+
+        if (!dirigida && !(origen == destino)) {
+            agregarAristaDirigida(vDestino, origen, peso);
+        }
+    }
+
+    void eliminarArista(const T& origen, const T& destino, bool dirigida = false) override {
+        NodoVertice* vOrigen = buscarVertice(origen);
+        NodoVertice* vDestino = buscarVertice(destino);
+
+        if (vOrigen == nullptr || vDestino == nullptr) {
+            throw VerticeInexistente();
+        }
+
+        bool eliminada = eliminarAristaDirigida(vOrigen, destino);
+
+        if (!dirigida && !(origen == destino)) {
+            eliminarAristaDirigida(vDestino, origen);
+        }
+
+        if (!eliminada) {
+            throw VerticeInexistente();
+        }
+    }
 };
+
 }  // namespace grafo
 
 #endif  // GRAFO_HPP
