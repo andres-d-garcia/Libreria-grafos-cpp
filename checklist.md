@@ -19,8 +19,8 @@ Leyenda:
 - [x] **[Ambos]** Definir `GrafoBase<T>`: misma interfaz para ambas implementaciones
 
 ## 4. Grafo con lista de adyacencia — [P1]
-- [ ] Estructura: `NodoVertice` con lista enlazada de `NodoArista` (punteros y `new`/`delete`)
-- [ ] Agregar/eliminar vértice
+- [x] Estructura: `NodoVertice` con lista enlazada de `NodoArista` (punteros y `new`/`delete`)
+- [x] Agregar/eliminar vértice
 - [ ] Agregar/eliminar arista (dirigida y no dirigida, ponderada y no ponderada)
 - [ ] Consultas: vecinos, grado, número de vértices/aristas
 - [ ] Robustez: validaciones y casos límite
