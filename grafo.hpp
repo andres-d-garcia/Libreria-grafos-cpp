@@ -413,6 +413,7 @@ private:
     }
 
 public:
+
     // Constructor
     GrafoLista() : cabeza_vertices_(nullptr), num_vertices_cache(0), num_aristas_cache(0) {}
 
@@ -440,6 +441,79 @@ public:
         cabeza_vertices_ = nullptr;
         num_vertices_cache = 0;
         num_aristas_cache = 0;
+    }
+    // --- Modificadores de Vértices ---
+
+    void agregarVertice(const T& vertice) override {
+        if (buscarVertice(vertice) != nullptr) {
+            throw ErrorGrafo("grafo: el vertice ya existe");
+        }
+        // Insertamos al inicio (O(1))
+        cabeza_vertices_ = new NodoVertice(vertice, cabeza_vertices_);
+        ++num_vertices_cache;
+    }
+
+    void eliminarVertice(const T& vertice) override {
+        NodoVertice* vTarget = buscarVertice(vertice);
+        if (vTarget == nullptr) {
+            throw VerticeInexistente();
+        }
+
+        // 1. Eliminar todas las aristas entrantes hacia 'vertice' desde los demás vértices
+        NodoVertice* actualV = cabeza_vertices_;
+        while (actualV != nullptr) {
+            if (actualV != vTarget) {
+                NodoArista* prevA = nullptr;
+                NodoArista* currA = actualV->aristas;
+                while (currA != nullptr) {
+                    if (currA->destino == vertice) {
+                        NodoArista* aBorrar = currA;
+                        if (prevA == nullptr) {
+                            actualV->aristas = currA->siguiente;
+                            currA = actualV->aristas;
+                        } else {
+                            prevA->siguiente = currA->siguiente;
+                            currA = prevA->siguiente;
+                        }
+                        delete aBorrar;
+                        --num_aristas_cache;
+                    } else {
+                        prevA = currA;
+                        currA = currA->siguiente;
+                    }
+                }
+            }
+            actualV = actualV->siguiente;
+        }
+
+        // 2. Eliminar todas las aristas salientes del propio 'vertice'
+        NodoArista* actualA = vTarget->aristas;
+        while (actualA != nullptr) {
+            NodoArista* aBorrar = actualA;
+            actualA = actualA->siguiente;
+            delete aBorrar;
+            --num_aristas_cache;
+        }
+        vTarget->aristas = nullptr;
+
+        // 3. Eliminar 'vertice' de la lista principal de vértices
+        NodoVertice* prevV = nullptr;
+        actualV = cabeza_vertices_;
+        while (actualV != nullptr) {
+            if (actualV == vTarget) {
+                if (prevV == nullptr) {
+                    cabeza_vertices_ = actualV->siguiente;
+                } else {
+                    prevV->siguiente = actualV->siguiente;
+                }
+                delete actualV;
+                break;
+            }
+            prevV = actualV;
+            actualV = actualV->siguiente;
+        }
+
+        --num_vertices_cache;
     }
 
     
