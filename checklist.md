@@ -21,8 +21,8 @@ Leyenda:
 ## 4. Grafo con lista de adyacencia — [P1]
 - [x] Estructura: `NodoVertice` con lista enlazada de `NodoArista` (punteros y `new`/`delete`)
 - [x] Agregar/eliminar vértice
-- [ ] Agregar/eliminar arista (dirigida y no dirigida, ponderada y no ponderada)
-- [ ] Consultas: vecinos, grado, número de vértices/aristas
+- [x] Agregar/eliminar arista (dirigida y no dirigida, ponderada y no ponderada)
+- [x] Consultas: vecinos, grado, número de vértices/aristas
 - [ ] Robustez: validaciones y casos límite
 
 ## 5. Grafo con matriz de adyacencia — [P2]
