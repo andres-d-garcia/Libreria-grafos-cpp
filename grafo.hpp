@@ -685,6 +685,163 @@ private:
         }
     }
 };
+// ---- GrafoMatriz<T>: Implementación mediante Matriz de Adyacencia ------------
+
+template <typename T>
+class GrafoMatriz : public GrafoBase<T> {
+private:
+    Lista<T> vertices_;      // Lista lineal para almacenar los vértices y mapearlos por índice
+    double** matriz_;        // Matriz bidimensional dinámica para los pesos
+    int capacidad_;          // Capacidad actual reservada en la matriz
+    int num_aristas_cache;   // Contador de aristas para O(1)
+
+    // Redimensionar la matriz cuando se supera la capacidad
+    void redimensionar( nueva_capacidad) {
+        // Reservar nueva matriz
+        double** nueva_matriz = new double*[nueva_capacidad];
+        for (int i = 0; i < nueva_capacidad; ++i) {
+            nueva_matriz[i] = new double[nueva_capacidad];
+            for (int j = 0; j < nueva_capacidad; ++j) {
+                nueva_matriz[i][j] = INF; // Inicializar todo con ausencia de arista
+            }
+        }
+
+        // Copiar datos anteriores si existían
+        if (matriz_ != nullptr) {
+            int n = vertices_.tamano();
+            for (int i = 0; i < n; ++i) {
+                for (int j = 0; j < n; ++j) {
+                    nueva_matriz[i][j] = matriz_[i][j];
+                }
+            }
+            // Liberar matriz antigua
+            for (int i = 0; i < capacidad_; ++i) {
+                delete[] matriz_[i];
+            }
+            delete[] matriz_;
+        }
+
+        matriz_ = nueva_matriz;
+        capacidad_ = nueva_capacidad;
+    }
+
+    void liberarMemoria() {
+        if (matriz_ != nullptr) {
+            for (int i = 0; i < capacidad_; ++i) {
+                delete[] matriz_[i];
+            }
+            delete[] matriz_;
+            matriz_ = nullptr;
+        }
+        vertices_.limpiar();
+        capacidad_ = 0;
+        num_aristas_cache = 0;
+    }
+
+    void copiarDesde(const GrafoMatriz& otra) {
+        liberarMemoria();
+        capacidad_ = otra.capacidad_;
+        num_aristas_cache = otra.num_aristas_cache;
+        vertices_ = otra.vertices_;
+
+        matriz_ = new double*[capacidad_];
+        for (int i = 0; i < capacidad_; ++i) {
+            matriz_[i] = new double[capacidad_];
+            for (int j = 0; j < capacidad_; ++j) {
+                matriz_[i][j] = otra.matriz_[i][j];
+            }
+        }
+    }
+
+public:
+    // Constructor por defecto (capacidad inicial por ejemplo 10)
+    GrafoMatriz(int capacidad_inicial = 10) 
+        : matriz_(nullptr), capacidad_(0), num_aristas_cache(0) {
+        redimensionar(capacidad_inicial);
+    }
+
+    // Constructor de copia (Regla de los 3)
+    GrafoMatriz(const GrafoMatriz& otra) 
+        : matriz_(nullptr), capacidad_(0), num_aristas_cache(0) {
+        copiarDesde(otra);
+    }
+
+    // Operador de asignación (Regla de los 3)
+    GrafoMatriz& operator=(const GrafoMatriz& otra) {
+        if (this != &otra) {
+            copiarDesde(otra);
+        }
+        return *this;
+    }
+
+    // Destructor
+    ~GrafoMatriz() override {
+        liberarMemoria();
+    }
+    // --- Modificadores de Vértices ---
+
+    void agregarVertice(const T& vertice) override {
+        if (vertices_.contiene(vertice)) {
+            throw ErrorGrafo("grafo: el vertice ya existe");
+        }
+        
+        int n = vertices_.tamano();
+        
+        // Si alcanzamos la capacidad máxima, redimensionamos (duplicando el tamaño)
+        if (n == capacidad_) {
+            redimensionar(capacidad_ == 0 ? 10 : capacidad_ * 2);
+        }
+        
+        // Agregamos el vértice al final de nuestra lista de mapeo
+        vertices_.push_back(vertice);
+        
+        // Aseguramos que la nueva fila y columna estén inicializadas en INF
+        for (int i = 0; i <= n; ++i) {
+            matriz_[n][i] = INF;
+            matriz_[i][n] = INF;
+        }
+    }
+
+    void eliminarVertice(const T& vertice) override {
+        int idx = vertices_.indiceDe(vertice);
+        if (idx < 0) {
+            throw VerticeInexistente();
+        }
+
+        int n = vertices_.tamano();
+
+        // 1. Restar del caché las aristas conectadas al vértice que vamos a eliminar
+        for (int i = 0; i < n; ++i) {
+            if (matriz_[idx][i] != INF) --num_aristas_cache; // Aristas salientes
+            if (i != idx && matriz_[i][idx] != INF) --num_aristas_cache; // Aristas entrantes (evita doble resta si hay bucle)
+        }
+
+        // 2. Desplazar filas hacia arriba para sobreescribir la fila 'idx'
+        for (int i = idx; i < n - 1; ++i) {
+            for (int j = 0; j < n; ++j) {
+                matriz_[i][j] = matriz_[i + 1][j];
+            }
+        }
+
+        // 3. Desplazar columnas hacia la izquierda para sobreescribir la columna 'idx'
+        for (int i = 0; i < n - 1; ++i) {
+            for (int j = idx; j < n - 1; ++j) {
+                matriz_[i][j] = matriz_[i][j + 1];
+            }
+        }
+
+        // 4. Limpiar la última fila y columna (dejadas atrás por el desplazamiento)
+        for (int i = 0; i < n; ++i) {
+            matriz_[n - 1][i] = INF;
+            matriz_[i][n - 1] = INF;
+        }
+
+        // 5. Eliminar el vértice de la lista de mapeo
+        vertices_.eliminarPos(static_cast<size_t>(idx));
+    }
+    
+};
+
 
 }  // namespace grafo
 
