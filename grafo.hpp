@@ -840,6 +840,142 @@ public:
         vertices_.eliminarPos(static_cast<size_t>(idx));
     }
     
+    // --- Modificadores de Aristas ---
+
+    void agregarArista(const T& origen, const T& destino, double peso = 1.0, bool dirigida = false) override {
+        validarPeso(peso);
+
+        int idx_origen = vertices_.indiceDe(origen);
+        int idx_destino = vertices_.indiceDe(destino);
+
+        if (idx_origen < 0 || idx_destino < 0) {
+            throw VerticeInexistente();
+        }
+
+        // Si no existía la arista en esa dirección, aumentamos el caché
+        if (matriz_[idx_origen][idx_destino] == INF) {
+            ++num_aristas_cache;
+        }
+        
+        // Asignamos el peso en la intersección (O(1))
+        matriz_[idx_origen][idx_destino] = peso;
+
+        // Si no es dirigida y no es un bucle hacia sí mismo, replicamos en el sentido inverso
+        if (!dirigida && idx_origen != idx_destino) {
+            if (matriz_[idx_destino][idx_origen] == INF) {
+                ++num_aristas_cache;
+            }
+            matriz_[idx_destino][idx_origen] = peso;
+        }
+    }
+
+    void eliminarArista(const T& origen, const T& destino, bool dirigida = false) override {
+        int idx_origen = vertices_.indiceDe(origen);
+        int idx_destino = vertices_.indiceDe(destino);
+
+        if (idx_origen < 0 || idx_destino < 0) {
+            throw VerticeInexistente();
+        }
+
+        bool eliminada = false;
+
+        // Verificamos si existe la arista principal
+        if (matriz_[idx_origen][idx_destino] != INF) {
+            matriz_[idx_origen][idx_destino] = INF; // Restablecemos a ausencia de arista
+            --num_aristas_cache;
+            eliminada = true;
+        }
+
+        // Si no es dirigida, eliminamos el sentido inverso
+        if (!dirigida && idx_origen != idx_destino) {
+            if (matriz_[idx_destino][idx_origen] != INF) {
+                matriz_[idx_destino][idx_origen] = INF;
+                --num_aristas_cache;
+            }
+        }
+
+        // Si no se encontró la arista para eliminar, lanzamos la excepción para mantener consistencia
+        if (!eliminada) {
+            throw VerticeInexistente();
+        }
+    }
+    // --- Consultas básicas ---
+
+    bool existeVertice(const T& vertice) const override {
+        return vertices_.contiene(vertice);
+    }
+
+    bool existeArista(const T& origen, const T& destino) const override {
+        int idx_origen = vertices_.indiceDe(origen);
+        int idx_destino = vertices_.indiceDe(destino);
+
+        if (idx_origen < 0 || idx_destino < 0) return false;
+
+        return matriz_[idx_origen][idx_destino] != INF;
+    }
+
+    double obtenerPeso(const T& origen, const T& destino) const override {
+        int idx_origen = vertices_.indiceDe(origen);
+        int idx_destino = vertices_.indiceDe(destino);
+
+        if (idx_origen < 0 || idx_destino < 0) {
+            throw VerticeInexistente();
+        }
+
+        double peso = matriz_[idx_origen][idx_destino];
+        if (peso == INF) {
+            throw VerticeInexistente();
+        }
+
+        return peso;
+    }
+
+    // --- Métricas ---
+
+    int numVertices() const override {
+        return static_cast<int>(vertices_.tamano());
+    }
+
+    int numAristas() const override {
+        return num_aristas_cache;
+    }
+
+    int grado(const T& vertice) const override {
+        int idx = vertices_.indiceDe(vertice);
+        if (idx < 0) {
+            throw VerticeInexistente();
+        }
+
+        int g = 0;
+        int n = vertices_.tamano();
+        // Contamos cuántas conexiones salientes tiene en su fila
+        for (int i = 0; i < n; ++i) {
+            if (matriz_[idx][i] != INF) {
+                ++g;
+            }
+        }
+        return g;
+    }
+
+    // --- Vecinos / Conexiones ---
+
+    Lista<T> obtenerVecinos(const T& vertice) const override {
+        int idx = vertices_.indiceDe(vertice);
+        if (idx < 0) {
+            throw VerticeInexistente();
+        }
+
+        Lista<T> vecinos;
+        int n = vertices_.tamano();
+        // Recorremos la fila buscando conexiones válidas
+        for (int i = 0; i < n; ++i) {
+            if (matriz_[idx][i] != INF) {
+                // Si hay conexión, añadimos el vértice correspondiente usando su índice
+                vecinos.push_back(vertices_[i]); 
+            }
+        }
+        return vecinos;
+    }
 };
 
 
