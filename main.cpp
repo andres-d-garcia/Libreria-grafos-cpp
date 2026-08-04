@@ -261,6 +261,23 @@ void probarGrafos() {
         cout << "Error en prueba de grafos: " << e.mensaje() << endl;
     }
 }
+void probarBFS() {
+    cout << "=== Pruebas de BFS (Amplitud) ===" << endl;
+    grafo::GrafoLista<char> g;
+    g.agregarVertice('A');
+    g.agregarVertice('B');
+    g.agregarVertice('C');
+    g.agregarVertice('D');
+
+    g.agregarArista('A', 'B', 1.0, false);
+    g.agregarArista('A', 'C', 1.0, false);
+    g.agregarArista('B', 'D', 1.0, false);
+
+    grafo::Lista<char> recorrido = grafo::bfs(g, 'A');
+    cout << "Orden BFS desde 'A': ";
+    imprimirLista(recorrido);
+    cout << endl << endl;
+}
 
 int main() {
     probarLista();
@@ -272,6 +289,6 @@ int main() {
     probarErrores();
 
     probarGrafos();
-    
+
     return 0;
 }

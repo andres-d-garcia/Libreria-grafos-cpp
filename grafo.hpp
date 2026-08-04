@@ -977,7 +977,39 @@ public:
         return vecinos;
     }
 };
+// ---- Algoritmo BFS (Búsqueda en Anchura) -----------------------------------
 
+template <typename T>
+Lista<T> bfs(const GrafoBase<T>& grafo, const T& inicio) {
+    if (!grafo.existeVertice(inicio)) {
+        throw VerticeInexistente();
+    }
+
+    Lista<T> ordenRecorrido;
+    Lista<T> visitados;
+    Cola<T> cola;
+
+    cola.encolar(inicio);
+    visitados.push_back(inicio);
+
+    while (!cola.vacia()) {
+        T actual = cola.frente();
+        cola.desencolar();
+        ordenRecorrido.push_back(actual);
+
+        // Obtener vecinos usando nuestra estructura Lista<T>
+        Lista<T> vecinos = grafo.obtenerVecinos(actual);
+        for (auto* n = vecinos.primer(); n != nullptr; n = n->siguiente) {
+            const T& vecino = n->dato;
+            if (!visitados.contiene(vecino)) {
+                visitados.push_back(vecino);
+                cola.encolar(vecino);
+            }
+        }
+    }
+
+    return ordenRecorrido;
+}
 
 }  // namespace grafo
 
