@@ -23,7 +23,7 @@ Leyenda:
 - [x] Agregar/eliminar vértice
 - [x] Agregar/eliminar arista (dirigida y no dirigida, ponderada y no ponderada)
 - [x] Consultas: vecinos, grado, número de vértices/aristas
-- [ ] Robustez: validaciones y casos límite
+- [x] Robustez: validaciones y casos límite
 
 ## 5. Grafo con matriz de adyacencia — [P2]
 - [ ] Estructura: **matriz dispersa enlazada** (lista de filas, cada fila con lista de celdas `{columna, peso}`; sin arreglos)
