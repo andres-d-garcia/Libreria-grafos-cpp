@@ -26,11 +26,11 @@ Leyenda:
 - [x] Robustez: validaciones y casos límite
 
 ## 5. Grafo con matriz de adyacencia — [P2]
-- [ ] Estructura: **matriz dispersa enlazada** (lista de filas, cada fila con lista de celdas `{columna, peso}`; sin arreglos)
-- [ ] Agregar/eliminar vértice (manteniendo la matriz consistente)
-- [ ] Agregar/eliminar arista (dirigida y no dirigida, ponderada y no ponderada)
-- [ ] Consultas: vecinos, grado, número de vértices/aristas
-- [ ] Robustez: validaciones y casos límite
+- [x] Estructura: **matriz dispersa enlazada** (lista de filas, cada fila con lista de celdas `{columna, peso}`; sin arreglos)
+- [x] Agregar/eliminar vértice (manteniendo la matriz consistente)
+- [x] Agregar/eliminar arista (dirigida y no dirigida, ponderada y no ponderada)
+- [x] Consultas: vecinos, grado, número de vértices/aristas
+- [x] Robustez: validaciones y casos límite
 
 ## 6. Algoritmos de recorrido
 - [ ] **[P1]** BFS (amplitud)
