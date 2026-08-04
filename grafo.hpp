@@ -1010,7 +1010,50 @@ Lista<T> bfs(const GrafoBase<T>& grafo, const T& inicio) {
 
     return ordenRecorrido;
 }
+// ---- Algoritmo DFS (Búsqueda en Profundidad) -------------------------------
 
+template <typename T>
+Lista<T> dfs(const GrafoBase<T>& grafo, const T& inicio) {
+    if (!grafo.existeVertice(inicio)) {
+        throw VerticeInexistente();
+    }
+
+    Lista<T> ordenRecorrido;
+    Lista<T> visitados;
+    Pila<T> pila;
+
+    pila.apilar(inicio);
+
+    while (!pila.vacia()) {
+        T actual = pila.tope();
+        pila.desapilar();
+
+        if (!visitados.contiene(actual)) {
+            visitados.push_back(actual);
+            ordenRecorrido.push_back(actual);
+
+            // Obtenemos los vecinos del vértice actual
+            Lista<T> vecinos = grafo.obtenerVecinos(actual);
+
+            // Para que la Pila procese los vecinos en orden natural (de izquierda a derecha),
+            // utilizamos una pila auxiliar temporal para invertir el orden de apilamiento.
+            Pila<T> pilaInversa;
+            for (auto* n = vecinos.primer(); n != nullptr; n = n->siguiente) {
+                const T& vecino = n->dato;
+                if (!visitados.contiene(vecino)) {
+                    pilaInversa.apilar(vecino);
+                }
+            }
+
+            while (!pilaInversa.vacia()) {
+                pila.apilar(pilaInversa.tope());
+                pilaInversa.desapilar();
+            }
+        }
+    }
+
+    return ordenRecorrido;
+}
 }  // namespace grafo
 
 #endif  // GRAFO_HPP
