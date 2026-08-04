@@ -209,6 +209,58 @@ void probarErrores() {
     }
     cout << "(validarPeso(0.5) pasa sin error)" << endl;
 }
+void probarGrafoPolimorfico(grafo::GrafoBase<char>* g, const char* tipo) {
+    cout << "=== Probando Polimorfismo: " << tipo << " ===" << endl;
+    
+    // 1. Agregar Vértices usando chars simples
+    g->agregarVertice('C'); // C = Caracas
+    g->agregarVertice('M'); // M = Maracaibo
+    g->agregarVertice('V'); // V = Valencia
+
+    // 2. Agregar Aristas
+    g->agregarArista('C', 'M', 500.0, false); // No dirigida
+    g->agregarArista('C', 'V', 150.0, true);  // Dirigida
+
+    // 3. Consultas Básicas y Métricas
+    cout << "Vertices (esp. 3): " << g->numVertices() << endl;
+    cout << "Aristas (esp. 2): " << g->numAristas() << endl;
+    cout << "Existe 'C'?: " << (g->existeVertice('C') ? "Si" : "No") << endl;
+    cout << "Existe 'C' -> 'M'?: " << (g->existeArista('C', 'M') ? "Si" : "No") << endl;
+    cout << "Peso 'C' -> 'V' (esp. 150): " << g->obtenerPeso('C', 'V') << endl;
+    cout << "Grado de 'C' (esp. 2): " << g->grado('C') << endl;
+
+    // 4. Obtener Vecinos
+    cout << "Vecinos de 'C': ";
+    imprimirLista(g->obtenerVecinos('C')); // Tu función imprimirLista funciona perfecto con char
+    cout << endl;
+
+    // 5. Eliminaciones
+    g->eliminarArista('C', 'M', false);
+    cout << "Aristas tras eliminar C-M (esp. 1): " << g->numAristas() << endl;
+
+    g->eliminarVertice('V');
+    cout << "Vertices tras eliminar V (esp. 2): " << g->numVertices() << endl;
+    cout << endl;
+}
+
+void probarGrafos() {
+    try {
+        // Instanciamos usando tipo 'char' y punteros a la clase base
+        grafo::GrafoBase<char>* grafoL = new grafo::GrafoLista<char>();
+        grafo::GrafoBase<char>* grafoM = new grafo::GrafoMatriz<char>();
+
+        probarGrafoPolimorfico(grafoL, "GrafoLista");
+        probarGrafoPolimorfico(grafoM, "GrafoMatriz");
+
+        // Liberamos memoria manual
+        delete grafoL;
+        delete grafoM;
+        
+        cout << "Pruebas de polimorfismo de grafos pasadas con exito." << endl << endl;
+    } catch (const grafo::ErrorGrafo& e) {
+        cout << "Error en prueba de grafos: " << e.mensaje() << endl;
+    }
+}
 
 int main() {
     probarLista();
@@ -218,5 +270,8 @@ int main() {
     probarPila();
     probarTipoCustom();
     probarErrores();
+
+    probarGrafos();
+    
     return 0;
 }
