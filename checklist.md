@@ -33,9 +33,9 @@ Leyenda:
 - [x] Robustez: validaciones y casos límite
 
 ## 6. Algoritmos de recorrido
-- [ ] **[P1]** BFS (amplitud)
-- [ ] **[P1]** DFS (profundidad)
-- [ ] **[P1]** Detección de ciclos
+- [x] **[P1]** BFS (amplitud)
+- [x] **[P1]** DFS (profundidad)
+- [x] **[P1]** Detección de ciclos
 
 ## 7. Camino más corto
 - [ ] **[P2]** BFS para grafos no ponderados
