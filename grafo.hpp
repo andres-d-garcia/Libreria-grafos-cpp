@@ -449,7 +449,7 @@ private:
     void copiarDesde(const GrafoLista& otra) {
         NodoVertice* currV = otra.cabeza_vertices_;
         while (currV != nullptr) {
-            agregarVertice(currV->dato);
+         agregarVertice(currV->dato);
             currV = currV->siguiente;
         }
 
@@ -1053,6 +1053,68 @@ Lista<T> dfs(const GrafoBase<T>& grafo, const T& inicio) {
     }
 
     return ordenRecorrido;
+}
+
+// ---- Detección de ciclos --------------------------------------------
+
+template <typename T>
+bool tieneCicloUtilDirigido(const T& actual, const GrafoBase<T>& grafo, Lista<T>& visitados, Lista<T>& enPila) {
+    visitados.push_back(actual);
+    enPila.push_back(actual);
+
+    Lista<T> vecinos = grafo.obtenerVecinos(actual);
+    for (auto* n = vecinos.primer(); n != nullptr; n = n->siguiente) {
+        const T& vecino = n->dato;
+        if (!visitados.contiene(vecino)) {
+            if (tieneCicloUtilDirigido(vecino, grafo, visitados, enPila)) return true;
+        } else if (enPila.contiene(vecino)) {
+            return true;
+        }
+    }
+
+    enPila.eliminarValor(actual);
+    return false;
+}
+
+template <typename T>
+bool tieneCicloUtilNoDirigido(const T& actual, const T& padre, const GrafoBase<T>& grafo, Lista<T>& visitados) {
+    visitados.push_back(actual);
+
+    Lista<T> vecinos = grafo.obtenerVecinos(actual);
+    for (auto* n = vecinos.primer(); n != nullptr; n = n->siguiente) {
+        const T& vecino = n->dato;
+        if (!visitados.contiene(vecino)) {
+            if (tieneCicloUtilNoDirigido(vecino, actual, grafo, visitados)) return true;
+        } else if (!(vecino == padre)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+template <typename T>
+bool tieneCiclo(const GrafoBase<T>& grafo, const T& inicio, bool dirigida = false) {
+    if (!grafo.existeVertice(inicio)) {
+        throw VerticeInexistente();
+    }
+
+    Lista<T> visitados;
+    if (dirigida) {
+        Lista<T> enPila;
+        return tieneCicloUtilDirigido(inicio, grafo, visitados, enPila);
+    } else {
+        visitados.push_back(inicio);
+        Lista<T> vecinos = grafo.obtenerVecinos(inicio);
+        for (auto* n = vecinos.primer(); n != nullptr; n = n->siguiente) {
+            const T& vecino = n->dato;
+            if (!visitados.contiene(vecino)) {
+                if (tieneCicloUtilNoDirigido(vecino, inicio, grafo, visitados)) return true;
+            } else if (!(vecino == inicio)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
 }  // namespace grafo
 
