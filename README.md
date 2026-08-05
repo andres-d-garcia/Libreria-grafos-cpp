@@ -13,8 +13,6 @@ inexistentes, overflow en pesos y maneja la memoria de forma segura.
 
 - `grafo.hpp` — la librería completa (estructuras base + dos implementaciones + algoritmos).
 - `main.cpp` — programa de demo/prueba con test cases de cada algoritmo y de cada implementación.
-- `checklist.md` — checklist de entrega.
-- `requerimientos.md` — enunciado del proyecto.
 
 ## Compilar y ejecutar
 
