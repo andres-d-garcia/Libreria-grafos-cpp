@@ -1116,6 +1116,81 @@ bool tieneCiclo(const GrafoBase<T>& grafo, const T& inicio, bool dirigida = fals
         return false;
     }
 }
+// ---- Camino más corto: BFS para grafos no ponderados -----------------------
+
+template <typename T>
+Lista<T> caminoBfsNoPonderado(const GrafoBase<T>& grafo, const T& inicio, const T& destino) {
+    if (!grafo.existeVertice(inicio) || !grafo.existeVertice(destino)) {
+        throw VerticeInexistente();
+    }
+
+    Lista<T> visitados;
+    Cola<T> cola;
+
+    // Estructura auxiliar interna para registrar los padres sin usar mapas de la STL
+    struct Rastro {
+        T actual;
+        T padre;
+        bool operator==(const Rastro& o) const { return actual == o.actual; }
+    };
+    Lista<Rastro> rastros;
+
+    cola.encolar(inicio);
+    visitados.push_back(inicio);
+    rastros.push_back({inicio, inicio}); // El inicio es su propio padre
+
+    bool encontrado = false;
+    while (!cola.vacia()) {
+        T actual = cola.frente();
+        cola.desencolar();
+
+        if (actual == destino) {
+            encontrado = true;
+            break;
+        }
+
+        Lista<T> vecinos = grafo.obtenerVecinos(actual);
+        for (auto* n = vecinos.primer(); n != nullptr; n = n->siguiente) {
+            const T& vecino = n->dato;
+            if (!visitados.contiene(vecino)) {
+                visitados.push_back(vecino);
+                rastros.push_back({vecino, actual});
+                cola.encolar(vecino);
+            }
+        }
+    }
+
+    Lista<T> caminoFinal;
+    if (!encontrado) {
+        return caminoFinal; // Retorna lista vacía si no existe camino
+    }
+
+    // Reconstruir el camino desde el destino hacia atrás usando los rastros
+    T actual = destino;
+    Lista<T> caminoInverso;
+    while (!(actual == inicio)) {
+        caminoInverso.push_back(actual);
+        for (auto* r = rastros.primer(); r != nullptr; r = r->siguiente) {
+            if (r->dato.actual == actual) {
+                actual = r->dato.padre;
+                break;
+            }
+        }
+    }
+    caminoInverso.push_back(inicio);
+
+    // Invertir el orden utilizando nuestra Pila<T> para que vaya de inicio a destino
+    Pila<T> pilaInvertir;
+    for (auto* r = caminoInverso.primer(); r != nullptr; r = r->siguiente) {
+        pilaInvertir.apilar(r->dato);
+    }
+    while (!pilaInvertir.vacia()) {
+        caminoFinal.push_back(pilaInvertir.tope());
+        pilaInvertir.desapilar();
+    }
+
+    return caminoFinal;
+}
 }  // namespace grafo
 
 #endif  // GRAFO_HPP
