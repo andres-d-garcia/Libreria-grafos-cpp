@@ -1733,6 +1733,97 @@ Lista<T> ordenTopologico(const GrafoBase<T>& grafo, const Lista<T>& verticesTota
     return orden;
 }
 
+// ---- 8.4 Árbol de expansión mínima (Prim) -----------------------------------
+
+// Arista genérica usada para reportar el resultado del árbol de expansión.
+template <typename T>
+struct Arista {
+    T origen;
+    T destino;
+    double peso;
+
+    bool operator==(const Arista& otra) const {
+        return origen == otra.origen && destino == otra.destino &&
+               peso == otra.peso;
+    }
+};
+
+// Algoritmo de Prim (O(V^2)) para grafos ponderados NO dirigidos.
+// Retorna el peso total del árbol de expansión mínima y deja en 'arbolMST'
+// la lista de aristas que lo forman. Lanza ErrorGrafo si el grafo no es
+// conexo (no existe tal árbol) o si hay overflow en la suma de pesos.
+template <typename T>
+double prim(const GrafoBase<T>& grafo, const Lista<T>& verticesTotales,
+            Lista<Arista<T>>& arbolMST) {
+    const int n = static_cast<int>(verticesTotales.tamano());
+    arbolMST.limpiar();
+    if (n == 0) return 0.0;
+
+    struct RastroPrim {
+        T vertice;
+        T padre;
+        double dist;
+        bool incluido;
+    };
+
+    Lista<RastroPrim> tabla;
+    bool primerVertice = true;
+    for (auto* v = verticesTotales.primer(); v != nullptr; v = v->siguiente) {
+        if (primerVertice) {
+            tabla.push_back({v->dato, v->dato, 0.0, false});
+            primerVertice = false;
+        } else {
+            tabla.push_back({v->dato, v->dato, INF, false});
+        }
+    }
+
+    double pesoTotal = 0.0;
+
+    for (int i = 0; i < n; ++i) {
+        // 1. Elegir el vértice no incluido con la menor distancia
+        RastroPrim* minRastro = nullptr;
+        double minDist = INF;
+        for (auto* t = tabla.primer(); t != nullptr; t = t->siguiente) {
+            if (!t->dato.incluido && t->dato.dist < minDist) {
+                minDist = t->dato.dist;
+                minRastro = &(t->dato);
+            }
+        }
+
+        // 2. Si algún vértice quedó inalcanzable, el grafo no es conexo
+        if (minRastro == nullptr || minDist == INF) {
+            arbolMST.limpiar();
+            throw ErrorGrafo("grafo: el grafo no es conexo, no hay arbol de expansion minima");
+        }
+
+        minRastro->incluido = true;
+
+        // 3. Registrar la arista seleccionada (todas excepto la raíz, i == 0)
+        if (i > 0) {
+            arbolMST.push_back(
+                {minRastro->padre, minRastro->vertice, minRastro->dist});
+            pesoTotal = sumaSegura(pesoTotal, minRastro->dist);
+        }
+
+        // 4. Relajar los vecinos aún no incluidos
+        Lista<T> vecinos = grafo.obtenerVecinos(minRastro->vertice);
+        for (auto* v = vecinos.primer(); v != nullptr; v = v->siguiente) {
+            for (auto* t = tabla.primer(); t != nullptr; t = t->siguiente) {
+                if (t->dato.vertice == v->dato && !t->dato.incluido) {
+                    double peso = grafo.obtenerPeso(minRastro->vertice, v->dato);
+                    if (peso < t->dato.dist) {
+                        t->dato.dist = peso;
+                        t->dato.padre = minRastro->vertice;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    return pesoTotal;
+}
+
 }  // namespace grafo
 
 #endif  // GRAFO_HPP

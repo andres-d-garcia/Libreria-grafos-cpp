@@ -321,6 +321,54 @@ void probarOrdenTopologico() {
     cout << endl << endl;
 }
 
+void probarPrim() {
+    cout << "=== Arbol de expansion minima (Prim) ===" << endl;
+
+    // Grafo: A-B(1), A-C(4), B-C(2), B-D(5), C-D(1)
+    // MST esperado: A-B(1) + C-D(1) + B-C(2) = 4
+    grafo::GrafoLista<char> g;
+    for (char c : {'A', 'B', 'C', 'D'}) g.agregarVertice(c);
+    g.agregarArista('A', 'B', 1.0, false);
+    g.agregarArista('A', 'C', 4.0, false);
+    g.agregarArista('B', 'C', 2.0, false);
+    g.agregarArista('B', 'D', 5.0, false);
+    g.agregarArista('C', 'D', 1.0, false);
+
+    grafo::Lista<char> vertices;
+    for (char c : {'A', 'B', 'C', 'D'}) vertices.push_back(c);
+
+    grafo::Lista<grafo::Arista<char>> arbol;
+    double total = grafo::prim(g, vertices, arbol);
+
+    cout << "Peso total MST (esp. 4): " << total << endl;
+    cout << "Aristas del MST (esp. 3): ";
+    for (auto* n = arbol.primer(); n != nullptr; n = n->siguiente) {
+        cout << n->dato.origen << "-" << n->dato.destino << "(" << n->dato.peso << ")";
+        if (n->siguiente != nullptr) cout << ", ";
+    }
+    cout << endl;
+
+    // Grafo no conexo: no existe MST
+    grafo::GrafoLista<char> gd;
+    gd.agregarVertice('A');
+    gd.agregarVertice('B');
+    gd.agregarArista('A', 'B', 1.0, false);
+    gd.agregarVertice('X');
+    grafo::Lista<char> vd;
+    vd.push_back('A');
+    vd.push_back('B');
+    vd.push_back('X');
+
+    grafo::Lista<grafo::Arista<char>> arbol2;
+    try {
+        grafo::prim(gd, vd, arbol2);
+        cout << "ERROR: no deberia existir MST" << endl;
+    } catch (const grafo::ErrorGrafo& e) {
+        cout << "No conexo -> capturado: " << e.mensaje() << endl;
+    }
+    cout << endl;
+}
+
 void probarBFS() {
     cout << "=== Pruebas de BFS (Amplitud) ===" << endl;
     grafo::GrafoLista<char> g;
@@ -351,6 +399,7 @@ int main() {
     probarGrafos();
 
     probarOrdenTopologico();
+    probarPrim();
 
     return 0;
 }

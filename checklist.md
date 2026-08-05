@@ -47,7 +47,7 @@ Leyenda:
 - [x] **[P1]** Verificación de conectividad / componentes conexas
 - [x] **[P2]** Grafo conectado o fuertemente conexo
 - [x] **[P2]** Orden topológico (si aplica)
-- [ ] **[P1]** Árbol de expansión mínima (Kruskal/Prim) — opcional
+- [x] **[P1]** Árbol de expansión mínima (Kruskal/Prim) — opcional
 
 ## 9. Robustez / resistencia a fallos
 - [ ] Validación de índices fuera de rango (out of bounds)
