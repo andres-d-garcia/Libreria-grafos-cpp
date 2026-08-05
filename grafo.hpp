@@ -1310,6 +1310,144 @@ Lista<T> dijkstra(const GrafoBase<T>& grafo, const T& inicio, const T& destino) 
 
     return caminoFinal;
 }
+
+// ---- Camino más corto: Algoritmo de Bellman-Ford ---------------------------
+
+template <typename T>
+Lista<T> bellmanFord(const GrafoBase<T>& grafo, const T& inicio, const T& destino) {
+    if (!grafo.existeVertice(inicio) || !grafo.existeVertice(destino)) {
+        throw VerticeInexistente();
+    }
+
+    struct AristaBF {
+        T origen;
+        T destino;
+        double peso;
+    };
+
+    Lista<AristaBF> aristas;
+    Lista<T> vertices;
+    Cola<T> cola;
+
+    // 1. Descubrir todos los vértices y aristas alcanzables desde 'inicio'
+    cola.encolar(inicio);
+    vertices.push_back(inicio);
+
+    while (!cola.vacia()) {
+        T actual = cola.frente();
+        cola.desencolar();
+
+        Lista<T> vecinos = grafo.obtenerVecinos(actual);
+        for (auto* n = vecinos.primer(); n != nullptr; n = n->siguiente) {
+            const T& vecino = n->dato;
+            aristas.push_back({actual, vecino, grafo.obtenerPeso(actual, vecino)});
+            
+            if (!vertices.contiene(vecino)) {
+                vertices.push_back(vecino);
+                cola.encolar(vecino);
+            }
+        }
+    }
+
+    // Si el destino no es alcanzable en absoluto
+    if (!vertices.contiene(destino)) {
+        return Lista<T>(); 
+    }
+
+    // 2. Inicializar distancias
+    struct RastroBF {
+        T vertice;
+        T padre;
+        double distancia;
+    };
+    
+    Lista<RastroBF> tabla;
+
+    for (auto* n = vertices.primer(); n != nullptr; n = n->siguiente) {
+        if (n->dato == inicio) {
+            tabla.push_back({n->dato, n->dato, 0.0});
+        } else {
+            tabla.push_back({n->dato, n->dato, INF});
+        }
+    }
+
+    // 3. Relajar todas las aristas (V - 1) veces
+    int numV = vertices.tamano();
+    for (int i = 0; i < numV - 1; ++i) {
+        bool algunCambio = false;
+        
+        for (auto* a = aristas.primer(); a != nullptr; a = a->siguiente) {
+            RastroBF* rOrigen = nullptr;
+            RastroBF* rDestino = nullptr;
+            
+            // Buscar las referencias directas en nuestra tabla
+            for (auto* t = tabla.primer(); t != nullptr; t = t->siguiente) {
+                if (t->dato.vertice == a->dato.origen) rOrigen = &(t->dato);
+                if (t->dato.vertice == a->dato.destino) rDestino = &(t->dato);
+                if (rOrigen != nullptr && rDestino != nullptr) break;
+            }
+
+            if (rOrigen->distancia != INF) {
+                double nuevaDist = sumaSegura(rOrigen->distancia, a->dato.peso);
+                if (nuevaDist < rDestino->distancia) {
+                    rDestino->distancia = nuevaDist;
+                    rDestino->padre = a->dato.origen;
+                    algunCambio = true;
+                }
+            }
+        }
+        
+        // Optimización: si en una pasada completa no hubo cambios, terminamos temprano
+        if (!algunCambio) break;
+    }
+
+    // 4. Verificar ciclos de peso negativo (1 pasada extra)
+    for (auto* a = aristas.primer(); a != nullptr; a = a->siguiente) {
+        RastroBF* rOrigen = nullptr;
+        RastroBF* rDestino = nullptr;
+        
+        for (auto* t = tabla.primer(); t != nullptr; t = t->siguiente) {
+            if (t->dato.vertice == a->dato.origen) rOrigen = &(t->dato);
+            if (t->dato.vertice == a->dato.destino) rDestino = &(t->dato);
+            if (rOrigen != nullptr && rDestino != nullptr) break;
+        }
+
+        if (rOrigen->distancia != INF) {
+            double nuevaDist = sumaSegura(rOrigen->distancia, a->dato.peso);
+            if (nuevaDist < rDestino->distancia) {
+                throw ErrorGrafo("grafo: ciclo de peso negativo detectado");
+            }
+        }
+    }
+
+    // 5. Reconstrucción del camino
+    Lista<T> caminoFinal;
+    T actual = destino;
+    Lista<T> caminoInverso;
+    
+    while (!(actual == inicio)) {
+        caminoInverso.push_back(actual);
+        for (auto* t = tabla.primer(); t != nullptr; t = t->siguiente) {
+            if (t->dato.vertice == actual) {
+                actual = t->dato.padre;
+                break;
+            }
+        }
+    }
+    caminoInverso.push_back(inicio);
+
+    // Invertimos la ruta
+    Pila<T> pilaInvertir;
+    for (auto* r = caminoInverso.primer(); r != nullptr; r = r->siguiente) {
+        pilaInvertir.apilar(r->dato);
+    }
+    while (!pilaInvertir.vacia()) {
+        caminoFinal.push_back(pilaInvertir.tope());
+        pilaInvertir.desapilar();
+    }
+
+    return caminoFinal;
+}
 }  // namespace grafo
 
 #endif  // GRAFO_HPP
