@@ -50,11 +50,11 @@ Leyenda:
 - [x] **[P1]** Árbol de expansión mínima (Kruskal/Prim) — opcional
 
 ## 9. Robustez / resistencia a fallos
-- [ ] Validación de índices fuera de rango (out of bounds)
-- [ ] Manejo de aristas/vértices inexistentes
-- [ ] Detección de overflow en pesos/sumas
-- [ ] Uso seguro de memoria (`new`/`delete` balanceados, sin fugas)
-- [ ] Pruebas con casos límite (grafo vacío, 1 nodo, nodos desconectados)
+- [x] Validación de índices fuera de rango (out of bounds)
+- [x] Manejo de aristas/vértices inexistentes
+- [x] Detección de overflow en pesos/sumas
+- [x] Uso seguro de memoria (`new`/`delete` balanceados, sin fugas)
+- [x] Pruebas con casos límite (grafo vacío, 1 nodo, nodos desconectados)
 
 ## 10. Pruebas y verificación
 - [ ] Programa de prueba/demo en `main.cpp`

@@ -369,6 +369,80 @@ void probarPrim() {
     cout << endl;
 }
 
+void probarCasosLimite() {
+    cout << "=== Casos limite: grafo vacio / 1 nodo / desconectados ===" << endl;
+
+    // Grafo vacio
+    grafo::GrafoLista<char> vacio;
+    grafo::Lista<char> vv;
+    cout << "Vacio: vertices=" << vacio.numVertices()
+         << " aristas=" << vacio.numAristas()
+         << " esConexo=" << grafo::esConexo(vacio, vv) << endl;
+
+    try {
+        grafo::bfs(vacio, 'A');
+        cout << "ERROR: bfs no deberia lanzar" << endl;
+    } catch (const grafo::VerticeInexistente&) {
+        cout << "bfs en grafo vacio -> VerticeInexistente capturado" << endl;
+    }
+
+    grafo::Lista<grafo::Arista<char>> arbolVacio;
+    cout << "prim en vacio (esp. 0): " << grafo::prim(vacio, vv, arbolVacio) << endl;
+
+    // Grafo de un solo nodo
+    grafo::GrafoLista<char> uno;
+    uno.agregarVertice('A');
+    grafo::Lista<char> v1;
+    v1.push_back('A');
+    cout << "1 nodo: grado=" << uno.grado('A')
+         << " vecinos=";
+    imprimirLista(uno.obtenerVecinos('A'));
+    cout << " esConexo=" << grafo::esConexo(uno, v1) << endl;
+
+    // Nodos desconectados
+    grafo::GrafoLista<char> discon;
+    discon.agregarVertice('A');
+    discon.agregarVertice('B');
+    discon.agregarVertice('C');
+    grafo::Lista<char> vd;
+    vd.push_back('A');
+    vd.push_back('B');
+    vd.push_back('C');
+
+    auto comps = grafo::componentesConexas(discon, vd);
+    cout << "3 nodos sin aristas: componentes (esp. 3)=" << comps.tamano() << endl;
+    cout << "esConexo (esp. false): " << (grafo::esConexo(discon, vd) ? "Si" : "No") << endl;
+
+    // Camino inexistente retorna lista vacia
+    grafo::Lista<char> camino = grafo::caminoBfsNoPonderado(discon, 'A', 'B');
+    cout << "camino A->B sin aristas (esp. vacio): ";
+    imprimirLista(camino);
+    cout << " tamano=" << camino.tamano() << endl;
+
+    // Operaciones sobre vertices/aristas inexistentes
+    try {
+        discon.grado('Z');
+    } catch (const grafo::VerticeInexistente&) {
+        cout << "grado('Z') -> VerticeInexistente capturado" << endl;
+    }
+
+    try {
+        discon.eliminarArista('A', 'B', false);
+    } catch (const grafo::VerticeInexistente&) {
+        cout << "eliminarArista inexistente -> VerticeInexistente capturado" << endl;
+    }
+
+    // Out of bounds en estructuras base
+    grafo::Lista<int> listaVacia;
+    try {
+        listaVacia.at(0);
+    } catch (const grafo::ErrorGrafo& e) {
+        cout << "at(0) en lista vacia -> capturado: " << e.mensaje() << endl;
+    }
+
+    cout << endl;
+}
+
 void probarBFS() {
     cout << "=== Pruebas de BFS (Amplitud) ===" << endl;
     grafo::GrafoLista<char> g;
@@ -400,6 +474,7 @@ int main() {
 
     probarOrdenTopologico();
     probarPrim();
+    probarCasosLimite();
 
     return 0;
 }
