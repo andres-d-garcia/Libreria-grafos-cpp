@@ -44,8 +44,8 @@ Leyenda:
 - [x] **[Ambos]** Floyd-Warshall (todos los pares)
 
 ## 8. Otras funciones relevantes
-- [ ] **[P1]** Verificación de conectividad / componentes conexas
-- [ ] **[P2]** Grafo conectado o fuertemente conexo
+- [x] **[P1]** Verificación de conectividad / componentes conexas
+- [x] **[P2]** Grafo conectado o fuertemente conexo
 - [ ] **[P2]** Orden topológico (si aplica)
 - [ ] **[P1]** Árbol de expansión mínima (Kruskal/Prim) — opcional
 
