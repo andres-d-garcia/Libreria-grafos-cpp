@@ -696,7 +696,7 @@ private:
     int num_aristas_cache;   // Contador de aristas para O(1)
 
     // Redimensionar la matriz cuando se supera la capacidad
-    void redimensionar( nueva_capacidad) {
+    void redimensionar(int nueva_capacidad) {
         // Reservar nueva matriz
         double** nueva_matriz = new double*[nueva_capacidad];
         for (int i = 0; i < nueva_capacidad; ++i) {
@@ -1659,6 +1659,78 @@ bool esConexo(const GrafoBase<T>& grafo, const Lista<T>& verticesTotales, bool d
         }
         return true; // Todos alcanzaron a todos
     }
+}
+
+// ---- 8.3 Orden topológico (grafo dirigido acíclico) ------------------------
+
+// Retorna un orden lineal de los vértices tal que si existe la arista
+// origen -> destino, entonces 'origen' aparece antes que 'destino'.
+// Algoritmo de Kahn (colas). Lanza ErrorGrafo si el grafo tiene un ciclo,
+// ya que en ese caso no existe orden topológico.
+template <typename T>
+Lista<T> ordenTopologico(const GrafoBase<T>& grafo, const Lista<T>& verticesTotales) {
+    // Estructura auxiliar: vértice y su grado de entrada actual
+    struct GradoEntrada {
+        T vertice;
+        int entradas;
+    };
+
+    Lista<GradoEntrada> grados;
+    for (auto* n = verticesTotales.primer(); n != nullptr; n = n->siguiente) {
+        grados.push_back({n->dato, 0});
+    }
+
+    // 1. Calcular el grado de entrada de cada vértice
+    for (auto* g = grados.primer(); g != nullptr; g = g->siguiente) {
+        Lista<T> vecinos = grafo.obtenerVecinos(g->dato.vertice);
+        for (auto* v = vecinos.primer(); v != nullptr; v = v->siguiente) {
+            for (auto* e = grados.primer(); e != nullptr; e = e->siguiente) {
+                if (e->dato.vertice == v->dato) {
+                    ++e->dato.entradas;
+                    break;
+                }
+            }
+        }
+    }
+
+    // 2. Encolar todos los vértices con grado de entrada 0
+    Cola<T> cola;
+    for (auto* g = grados.primer(); g != nullptr; g = g->siguiente) {
+        if (g->dato.entradas == 0) {
+            cola.encolar(g->dato.vertice);
+        }
+    }
+
+    // 3. Procesar: al extraer un vértice, reducir el grado de sus vecinos
+    Lista<T> orden;
+    int procesados = 0;
+    while (!cola.vacia()) {
+        T actual = cola.frente();
+        cola.desencolar();
+
+        orden.push_back(actual);
+        ++procesados;
+
+        Lista<T> vecinos = grafo.obtenerVecinos(actual);
+        for (auto* v = vecinos.primer(); v != nullptr; v = v->siguiente) {
+            for (auto* e = grados.primer(); e != nullptr; e = e->siguiente) {
+                if (e->dato.vertice == v->dato) {
+                    --e->dato.entradas;
+                    if (e->dato.entradas == 0) {
+                        cola.encolar(e->dato.vertice);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    // 4. Si no se procesaron todos los vértices, existe un ciclo
+    if (procesados != static_cast<int>(verticesTotales.tamano())) {
+        throw ErrorGrafo("grafo: existe un ciclo, no hay orden topologico");
+    }
+
+    return orden;
 }
 
 }  // namespace grafo

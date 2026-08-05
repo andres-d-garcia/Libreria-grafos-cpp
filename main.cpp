@@ -261,6 +261,66 @@ void probarGrafos() {
         cout << "Error en prueba de grafos: " << e.mensaje() << endl;
     }
 }
+void probarOrdenTopologico() {
+    cout << "=== Orden topologico (Kahn) ===" << endl;
+
+    // DAG: A -> B -> D, A -> C -> D  => orden valido: A, B, C, D
+    grafo::GrafoLista<char> g;
+    g.agregarVertice('A');
+    g.agregarVertice('B');
+    g.agregarVertice('C');
+    g.agregarVertice('D');
+    g.agregarArista('A', 'B', 1.0, true);
+    g.agregarArista('B', 'D', 1.0, true);
+    g.agregarArista('A', 'C', 1.0, true);
+    g.agregarArista('C', 'D', 1.0, true);
+
+    grafo::Lista<char> vertices;
+    vertices.push_back('A');
+    vertices.push_back('B');
+    vertices.push_back('C');
+    vertices.push_back('D');
+
+    cout << "Orden topologico (esp. A,B,C,D): ";
+    imprimirLista(grafo::ordenTopologico(g, vertices));
+    cout << endl;
+
+    // Ciclo: A -> B -> A no tiene orden topologico
+    grafo::GrafoLista<char> gciclo;
+    gciclo.agregarVertice('A');
+    gciclo.agregarVertice('B');
+    gciclo.agregarArista('A', 'B', 1.0, true);
+    gciclo.agregarArista('B', 'A', 1.0, true);
+    grafo::Lista<char> vciclo;
+    vciclo.push_back('A');
+    vciclo.push_back('B');
+
+    try {
+        grafo::ordenTopologico(gciclo, vciclo);
+        cout << "ERROR: no deberia existir orden topologico" << endl;
+    } catch (const grafo::ErrorGrafo& e) {
+        cout << "Ciclo detectado -> capturado: " << e.mensaje() << endl;
+    }
+
+    // Mismo test sobre GrafoMatriz
+    grafo::GrafoMatriz<char> gm;
+    gm.agregarVertice('A');
+    gm.agregarVertice('B');
+    gm.agregarVertice('C');
+    gm.agregarArista('A', 'B', 1.0, true);
+    gm.agregarArista('A', 'C', 1.0, true);
+    gm.agregarArista('B', 'C', 1.0, true);
+
+    grafo::Lista<char> verticesMatriz;
+    verticesMatriz.push_back('A');
+    verticesMatriz.push_back('B');
+    verticesMatriz.push_back('C');
+
+    cout << "Orden topologico Matriz (esp. A,B,C): ";
+    imprimirLista(grafo::ordenTopologico(gm, verticesMatriz));
+    cout << endl << endl;
+}
+
 void probarBFS() {
     cout << "=== Pruebas de BFS (Amplitud) ===" << endl;
     grafo::GrafoLista<char> g;
@@ -289,6 +349,8 @@ int main() {
     probarErrores();
 
     probarGrafos();
+
+    probarOrdenTopologico();
 
     return 0;
 }
