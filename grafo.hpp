@@ -1448,6 +1448,158 @@ Lista<T> bellmanFord(const GrafoBase<T>& grafo, const T& inicio, const T& destin
 
     return caminoFinal;
 }
+
+// ---- Camino más corto: Algoritmo de Floyd-Warshall (Todos los pares) -------
+
+template <typename T>
+class RutasFloydWarshall {
+private:
+    Lista<T> vertices_;
+    int n_;
+    double** dist_;
+    int** sig_;
+
+    void inicializarMemoria(int n) {
+        n_ = n;
+        if (n_ <= 0) {
+            dist_ = nullptr;
+            sig_ = nullptr;
+            return;
+        }
+        dist_ = new double*[n_];
+        sig_ = new int*[n_];
+        for (int i = 0; i < n_; ++i) {
+            dist_[i] = new double[n_];
+            sig_[i] = new int[n_];
+            for (int j = 0; j < n_; ++j) {
+                dist_[i][j] = INF; // INF viene de grafo.hpp
+                sig_[i][j] = -1;
+            }
+        }
+    }
+
+    void liberarMemoria() {
+        if (dist_ != nullptr) {
+            for (int i = 0; i < n_; ++i) delete[] dist_[i];
+            delete[] dist_;
+            dist_ = nullptr;
+        }
+        if (sig_ != nullptr) {
+            for (int i = 0; i < n_; ++i) delete[] sig_[i];
+            delete[] sig_;
+            sig_ = nullptr;
+        }
+        n_ = 0;
+    }
+
+    void copiarDesde(const RutasFloydWarshall& otra) {
+        vertices_ = otra.vertices_;
+        inicializarMemoria(otra.n_);
+        for (int i = 0; i < n_; ++i) {
+            for (int j = 0; j < n_; ++j) {
+                dist_[i][j] = otra.dist_[i][j];
+                sig_[i][j] = otra.sig_[i][j];
+            }
+        }
+    }
+
+public:
+    // Regla de los 3 para manejo seguro de memoria
+    RutasFloydWarshall() : n_(0), dist_(nullptr), sig_(nullptr) {}
+    ~RutasFloydWarshall() { liberarMemoria(); }
+    
+    RutasFloydWarshall(const RutasFloydWarshall& otra) : n_(0), dist_(nullptr), sig_(nullptr) { 
+        copiarDesde(otra); 
+    }
+    
+    RutasFloydWarshall& operator=(const RutasFloydWarshall& otra) {
+        if (this != &otra) {
+            liberarMemoria();
+            copiarDesde(otra);
+        }
+        return *this;
+    }
+
+    // Ejecución del algoritmo
+    void calcular(const GrafoBase<T>& grafo, const Lista<T>& verticesTotales) {
+        vertices_ = verticesTotales;
+        liberarMemoria();
+        inicializarMemoria(vertices_.tamano());
+
+        // 1. Inicializar la matriz con las distancias directas (aristas)
+        for (int i = 0; i < n_; ++i) {
+            dist_[i][i] = 0.0;
+            sig_[i][i] = i;
+            T vOrigen = vertices_[i];
+            
+            Lista<T> vecinos = grafo.obtenerVecinos(vOrigen);
+            for (auto* n = vecinos.primer(); n != nullptr; n = n->siguiente) {
+                T vDestino = n->dato;
+                int j = vertices_.indiceDe(vDestino);
+                if (j >= 0) {
+                    dist_[i][j] = grafo.obtenerPeso(vOrigen, vDestino);
+                    sig_[i][j] = j; // El siguiente paso desde 'i' hacia 'j' es 'j'
+                }
+            }
+        }
+
+        // 2. Algoritmo de Floyd-Warshall O(V^3)
+        for (int k = 0; k < n_; ++k) {
+            for (int i = 0; i < n_; ++i) {
+                for (int j = 0; j < n_; ++j) {
+                    if (dist_[i][k] != INF && dist_[k][j] != INF) {
+                        double suma = sumaSegura(dist_[i][k], dist_[k][j]);
+                        if (suma < dist_[i][j]) {
+                            dist_[i][j] = suma;
+                            sig_[i][j] = sig_[i][k]; // Actualizamos la matriz de rastreo
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. Detección de ciclos de peso negativo en la diagonal principal
+        for (int i = 0; i < n_; ++i) {
+            if (dist_[i][i] < 0.0) {
+                throw ErrorGrafo("grafo: Floyd-Warshall detecto un ciclo de peso negativo");
+            }
+        }
+    }
+
+    // --- Consultas posteriores al cálculo ---
+
+    double obtenerDistancia(const T& origen, const T& destino) const {
+        int i = vertices_.indiceDe(origen);
+        int j = vertices_.indiceDe(destino);
+        if (i < 0 || j < 0) throw VerticeInexistente();
+        return dist_[i][j];
+    }
+
+    Lista<T> obtenerCamino(const T& origen, const T& destino) const {
+        int i = vertices_.indiceDe(origen);
+        int j = vertices_.indiceDe(destino);
+        if (i < 0 || j < 0) throw VerticeInexistente();
+
+        Lista<T> camino;
+        if (dist_[i][j] == INF) return camino; // No hay ruta posible
+
+        int actual = i;
+        while (actual != j) {
+            camino.push_back(vertices_[actual]);
+            actual = sig_[actual][j];
+        }
+        camino.push_back(vertices_[j]);
+        return camino;
+    }
+};
+
+// Función envoltorio limpia para integrarse con el estilo de la librería
+template <typename T>
+RutasFloydWarshall<T> floydWarshall(const GrafoBase<T>& grafo, const Lista<T>& verticesTotales) {
+    RutasFloydWarshall<T> rutas;
+    rutas.calcular(grafo, verticesTotales);
+    return rutas;
+}
 }  // namespace grafo
 
 #endif  // GRAFO_HPP
