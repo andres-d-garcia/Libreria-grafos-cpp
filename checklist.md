@@ -38,10 +38,10 @@ Leyenda:
 - [x] **[P1]** Detección de ciclos
 
 ## 7. Camino más corto
-- [ ] **[P2]** BFS para grafos no ponderados
-- [ ] **[P2]** Dijkstra
-- [ ] **[P2]** Bellman-Ford (aristas negativas)
-- [ ] **[Ambos]** Floyd-Warshall (todos los pares)
+- [x] **[P2]** BFS para grafos no ponderados
+- [x] **[P2]** Dijkstra
+- [x] **[P2]** Bellman-Ford (aristas negativas)
+- [x] **[Ambos]** Floyd-Warshall (todos los pares)
 
 ## 8. Otras funciones relevantes
 - [ ] **[P1]** Verificación de conectividad / componentes conexas
