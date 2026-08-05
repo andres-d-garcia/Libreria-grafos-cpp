@@ -1191,6 +1191,125 @@ Lista<T> caminoBfsNoPonderado(const GrafoBase<T>& grafo, const T& inicio, const 
 
     return caminoFinal;
 }
+
+// ---- Camino más corto: Algoritmo de Dijkstra -------------------------------
+
+template <typename T>
+Lista<T> dijkstra(const GrafoBase<T>& grafo, const T& inicio, const T& destino) {
+    if (!grafo.existeVertice(inicio) || !grafo.existeVertice(destino)) {
+        throw VerticeInexistente();
+    }
+
+    // Estructura para la tabla de enrutamiento
+    struct RastroDijkstra {
+        T vertice;
+        T padre;
+        double distancia;
+        bool visitado;
+    };
+
+    Lista<RastroDijkstra> tabla;
+    
+    // Inicializamos el vértice de origen
+    tabla.push_back({inicio, inicio, 0.0, false});
+
+    bool destinoAlcanzado = false;
+
+    while (true) {
+        // 1. Extraer el vértice no visitado con la distancia mínima (Simulando Min-Priority Queue)
+        RastroDijkstra* minRastro = nullptr;
+        double minDist = INF;
+
+        for (auto* n = tabla.primer(); n != nullptr; n = n->siguiente) {
+            if (!n->dato.visitado && n->dato.distancia < minDist) {
+                minDist = n->dato.distancia;
+                minRastro = &(n->dato);
+            }
+        }
+
+        // Si no quedan vértices alcanzables, terminamos
+        if (minRastro == nullptr || minDist == INF) {
+            break; 
+        }
+
+        T actual = minRastro->vertice;
+        minRastro->visitado = true;
+
+        // Optimización: si llegamos al destino, no necesitamos explorar más
+        if (actual == destino) {
+            destinoAlcanzado = true;
+            break;
+        }
+
+        // 2. Relajar las aristas de los vecinos
+        Lista<T> vecinos = grafo.obtenerVecinos(actual);
+        for (auto* nVec = vecinos.primer(); nVec != nullptr; nVec = nVec->siguiente) {
+            const T& vecino = nVec->dato;
+            
+            // Buscar el vecino en la tabla
+            RastroDijkstra* vecinoRastro = nullptr;
+            for (auto* t = tabla.primer(); t != nullptr; t = t->siguiente) {
+                if (t->dato.vertice == vecino) {
+                    vecinoRastro = &(t->dato);
+                    break;
+                }
+            }
+
+            // Si es la primera vez que vemos este vértice, lo agregamos con distancia infinita
+            if (vecinoRastro == nullptr) {
+                tabla.push_back({vecino, vecino, INF, false});
+                // Recuperamos su puntero (siempre será el último agregado)
+                auto* ultimo = tabla.primer();
+                while (ultimo->siguiente != nullptr) ultimo = ultimo->siguiente;
+                vecinoRastro = &(ultimo->dato);
+            }
+
+            // Actualizar distancias
+            if (!vecinoRastro->visitado) {
+                double pesoArista = grafo.obtenerPeso(actual, vecino);
+                double nuevaDist = sumaSegura(minRastro->distancia, pesoArista);
+
+                if (nuevaDist < vecinoRastro->distancia) {
+                    vecinoRastro->distancia = nuevaDist;
+                    vecinoRastro->padre = actual;
+                }
+            }
+        }
+    }
+
+    // 3. Reconstrucción del camino
+    Lista<T> caminoFinal;
+    if (!destinoAlcanzado) {
+        return caminoFinal; // Retorna vacío si es inalcanzable
+    }
+
+    T actual = destino;
+    Lista<T> caminoInverso;
+    
+    while (!(actual == inicio)) {
+        caminoInverso.push_back(actual);
+        // Buscar quién es su padre en la tabla
+        for (auto* t = tabla.primer(); t != nullptr; t = t->siguiente) {
+            if (t->dato.vertice == actual) {
+                actual = t->dato.padre;
+                break;
+            }
+        }
+    }
+    caminoInverso.push_back(inicio);
+
+    // Invertir el orden para retornar de inicio a destino
+    Pila<T> pilaInvertir;
+    for (auto* r = caminoInverso.primer(); r != nullptr; r = r->siguiente) {
+        pilaInvertir.apilar(r->dato);
+    }
+    while (!pilaInvertir.vacia()) {
+        caminoFinal.push_back(pilaInvertir.tope());
+        pilaInvertir.desapilar();
+    }
+
+    return caminoFinal;
+}
 }  // namespace grafo
 
 #endif  // GRAFO_HPP
