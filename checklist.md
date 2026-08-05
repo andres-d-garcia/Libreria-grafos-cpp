@@ -57,9 +57,13 @@ Leyenda:
 - [x] Pruebas con casos límite (grafo vacío, 1 nodo, nodos desconectados)
 
 ## 10. Pruebas y verificación
-- [ ] Programa de prueba/demo en `main.cpp`
-- [ ] Test cases de cada algoritmo y de cada implementación
-- [ ] Compilar sin warnings (con `-fsanitize=address,undefined` si el toolchain lo permite)
+- [x] Programa de prueba/demo en `main.cpp`
+- [x] Test cases de cada algoritmo y de cada implementación
+- [x] Compilar sin warnings (con `-fsanitize=address,undefined` si el toolchain lo permite)
+
+> Nota: `-fsanitize=address,undefined` no está disponible en el toolchain MSYS2/MinGW
+> instalado (faltan `libasan`/`libubsan`). Se verificó en su lugar con
+> `-Wall -Wextra -Wpedantic` (sin warnings) y `-D_GLIBCXX_DEBUG` (sin abortos).
 
 ## 11. Documentación y entrega
 - [ ] `README.md` con ejemplos de uso ("incluir y usar")

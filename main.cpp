@@ -261,111 +261,152 @@ void probarGrafos() {
         cout << "Error en prueba de grafos: " << e.mensaje() << endl;
     }
 }
-void probarOrdenTopologico() {
-    cout << "=== Orden topologico (Kahn) ===" << endl;
+template <typename Grafo>
+void probarAlgoritmos(const char* tipo) {
+    cout << "=== Algoritmos con " << tipo << " ===" << endl;
 
-    // DAG: A -> B -> D, A -> C -> D  => orden valido: A, B, C, D
-    grafo::GrafoLista<char> g;
-    g.agregarVertice('A');
-    g.agregarVertice('B');
-    g.agregarVertice('C');
-    g.agregarVertice('D');
-    g.agregarArista('A', 'B', 1.0, true);
-    g.agregarArista('B', 'D', 1.0, true);
-    g.agregarArista('A', 'C', 1.0, true);
-    g.agregarArista('C', 'D', 1.0, true);
+    // Grafo dirigido ponderado (DAG) para recorridos y caminos
+    Grafo g;
+    for (char c : {'A', 'B', 'C', 'D', 'E'}) g.agregarVertice(c);
+    g.agregarArista('A', 'B', 4.0, true);
+    g.agregarArista('A', 'C', 2.0, true);
+    g.agregarArista('C', 'B', 1.0, true);
+    g.agregarArista('B', 'D', 5.0, true);
+    g.agregarArista('C', 'D', 8.0, true);
+    g.agregarArista('C', 'E', 10.0, true);
+    g.agregarArista('D', 'E', 2.0, true);
 
     grafo::Lista<char> vertices;
-    vertices.push_back('A');
-    vertices.push_back('B');
-    vertices.push_back('C');
-    vertices.push_back('D');
+    for (char c : {'A', 'B', 'C', 'D', 'E'}) vertices.push_back(c);
 
-    cout << "Orden topologico (esp. A,B,C,D): ";
+    cout << "BFS desde 'A': ";
+    imprimirLista(grafo::bfs(g, 'A'));
+    cout << endl;
+    cout << "DFS desde 'A': ";
+    imprimirLista(grafo::dfs(g, 'A'));
+    cout << endl;
+    cout << "tieneCiclo dirigido (esp. false): "
+         << (grafo::tieneCiclo(g, 'A', true) ? "Si" : "No") << endl;
+    cout << "caminoBfsNoPonderado A->E (esp. A,C,E): ";
+    imprimirLista(grafo::caminoBfsNoPonderado(g, 'A', 'E'));
+    cout << endl;
+    cout << "dijkstra A->E (esp. A,C,B,D,E, costo 10): ";
+    imprimirLista(grafo::dijkstra(g, 'A', 'E'));
+    cout << endl;
+    cout << "bellmanFord A->E (esp. A,C,B,D,E): ";
+    imprimirLista(grafo::bellmanFord(g, 'A', 'E'));
+    cout << endl;
+    cout << "ordenTopologico (esp. A,C,B,D,E): ";
     imprimirLista(grafo::ordenTopologico(g, vertices));
     cout << endl;
 
-    // Ciclo: A -> B -> A no tiene orden topologico
-    grafo::GrafoLista<char> gciclo;
-    gciclo.agregarVertice('A');
-    gciclo.agregarVertice('B');
-    gciclo.agregarArista('A', 'B', 1.0, true);
-    gciclo.agregarArista('B', 'A', 1.0, true);
-    grafo::Lista<char> vciclo;
-    vciclo.push_back('A');
-    vciclo.push_back('B');
-
-    try {
-        grafo::ordenTopologico(gciclo, vciclo);
-        cout << "ERROR: no deberia existir orden topologico" << endl;
-    } catch (const grafo::ErrorGrafo& e) {
-        cout << "Ciclo detectado -> capturado: " << e.mensaje() << endl;
-    }
-
-    // Mismo test sobre GrafoMatriz
-    grafo::GrafoMatriz<char> gm;
-    gm.agregarVertice('A');
-    gm.agregarVertice('B');
-    gm.agregarVertice('C');
-    gm.agregarArista('A', 'B', 1.0, true);
-    gm.agregarArista('A', 'C', 1.0, true);
-    gm.agregarArista('B', 'C', 1.0, true);
-
-    grafo::Lista<char> verticesMatriz;
-    verticesMatriz.push_back('A');
-    verticesMatriz.push_back('B');
-    verticesMatriz.push_back('C');
-
-    cout << "Orden topologico Matriz (esp. A,B,C): ";
-    imprimirLista(grafo::ordenTopologico(gm, verticesMatriz));
-    cout << endl << endl;
-}
-
-void probarPrim() {
-    cout << "=== Arbol de expansion minima (Prim) ===" << endl;
-
-    // Grafo: A-B(1), A-C(4), B-C(2), B-D(5), C-D(1)
-    // MST esperado: A-B(1) + C-D(1) + B-C(2) = 4
-    grafo::GrafoLista<char> g;
-    for (char c : {'A', 'B', 'C', 'D'}) g.agregarVertice(c);
-    g.agregarArista('A', 'B', 1.0, false);
-    g.agregarArista('A', 'C', 4.0, false);
-    g.agregarArista('B', 'C', 2.0, false);
-    g.agregarArista('B', 'D', 5.0, false);
-    g.agregarArista('C', 'D', 1.0, false);
-
-    grafo::Lista<char> vertices;
-    for (char c : {'A', 'B', 'C', 'D'}) vertices.push_back(c);
-
-    grafo::Lista<grafo::Arista<char>> arbol;
-    double total = grafo::prim(g, vertices, arbol);
-
-    cout << "Peso total MST (esp. 4): " << total << endl;
-    cout << "Aristas del MST (esp. 3): ";
-    for (auto* n = arbol.primer(); n != nullptr; n = n->siguiente) {
-        cout << n->dato.origen << "-" << n->dato.destino << "(" << n->dato.peso << ")";
-        if (n->siguiente != nullptr) cout << ", ";
-    }
+    // Floyd-Warshall (todos los pares)
+    auto rutas = grafo::floydWarshall(g, vertices);
+    cout << "floydWarshall A->E (esp. A,C,B,D,E): ";
+    imprimirLista(rutas.obtenerCamino('A', 'E'));
     cout << endl;
 
-    // Grafo no conexo: no existe MST
-    grafo::GrafoLista<char> gd;
-    gd.agregarVertice('A');
-    gd.agregarVertice('B');
-    gd.agregarArista('A', 'B', 1.0, false);
-    gd.agregarVertice('X');
-    grafo::Lista<char> vd;
-    vd.push_back('A');
-    vd.push_back('B');
-    vd.push_back('X');
-
-    grafo::Lista<grafo::Arista<char>> arbol2;
+    // Ciclo en grafo dirigido -> no hay orden topologico
+    Grafo gtopo;
+    gtopo.agregarVertice('A');
+    gtopo.agregarVertice('B');
+    gtopo.agregarArista('A', 'B', 1.0, true);
+    gtopo.agregarArista('B', 'A', 1.0, true);
+    grafo::Lista<char> vtopo;
+    vtopo.push_back('A');
+    vtopo.push_back('B');
     try {
-        grafo::prim(gd, vd, arbol2);
+        grafo::ordenTopologico(gtopo, vtopo);
+        cout << "ERROR: no deberia existir orden topologico" << endl;
+    } catch (const grafo::ErrorGrafo& e) {
+        cout << "ordenTopologico con ciclo -> capturado: " << e.mensaje() << endl;
+    }
+
+    // Bellman-Ford con arista negativa (sin ciclo negativo)
+    Grafo gneg;
+    for (char c : {'A', 'B', 'C', 'D'}) gneg.agregarVertice(c);
+    gneg.agregarArista('A', 'C', 1.0, true);
+    gneg.agregarArista('C', 'B', 2.0, true);
+    gneg.agregarArista('B', 'D', -4.0, true);
+    cout << "bellmanFord arista negativa A->D (esp. A,C,B,D): ";
+    imprimirLista(grafo::bellmanFord(gneg, 'A', 'D'));
+    cout << endl;
+
+    // Ciclo de peso negativo -> Bellman-Ford debe lanzar
+    Grafo gciclo;
+    gciclo.agregarVertice('A');
+    gciclo.agregarVertice('B');
+    gciclo.agregarVertice('C');
+    gciclo.agregarArista('A', 'B', 1.0, true);
+    gciclo.agregarArista('B', 'C', 1.0, true);
+    gciclo.agregarArista('C', 'A', -3.0, true);
+    try {
+        grafo::bellmanFord(gciclo, 'A', 'C');
+        cout << "ERROR: no deberia detectar ciclo negativo" << endl;
+    } catch (const grafo::ErrorGrafo& e) {
+        cout << "ciclo negativo -> capturado: " << e.mensaje() << endl;
+    }
+
+    // Grafo no dirigido con una componente aislada y un bucle
+    Grafo gu;
+    for (char c : {'A', 'B', 'C', 'D', 'X'}) gu.agregarVertice(c);
+    gu.agregarArista('A', 'B', 1.0, false);
+    gu.agregarArista('B', 'C', 1.0, false);
+    gu.agregarArista('A', 'C', 1.0, false);
+    gu.agregarArista('D', 'D', 1.0, false);
+
+    grafo::Lista<char> vu;
+    for (char c : {'A', 'B', 'C', 'D', 'X'}) vu.push_back(c);
+
+    auto comps = grafo::componentesConexas(gu, vu);
+    cout << "componentesConexas (esp. 3): " << comps.tamano() << endl;
+    cout << "esConexo no dirigido (esp. false): "
+         << (grafo::esConexo(gu, vu) ? "Si" : "No") << endl;
+
+    // Grafo dirigido fuertemente conexo
+    Grafo gsc;
+    for (char c : {'A', 'B', 'C'}) gsc.agregarVertice(c);
+    gsc.agregarArista('A', 'B', 1.0, true);
+    gsc.agregarArista('B', 'C', 1.0, true);
+    gsc.agregarArista('C', 'A', 1.0, true);
+    grafo::Lista<char> vsc;
+    for (char c : {'A', 'B', 'C'}) vsc.push_back(c);
+    cout << "esConexo fuertemente conexo (esp. true): "
+         << (grafo::esConexo(gsc, vsc, true) ? "Si" : "No") << endl;
+
+    // Prim (arbol de expansion minima)
+    Grafo gp;
+    for (char c : {'A', 'B', 'C', 'D'}) gp.agregarVertice(c);
+    gp.agregarArista('A', 'B', 1.0, false);
+    gp.agregarArista('A', 'C', 4.0, false);
+    gp.agregarArista('B', 'C', 2.0, false);
+    gp.agregarArista('B', 'D', 5.0, false);
+    gp.agregarArista('C', 'D', 1.0, false);
+
+    grafo::Lista<char> vp;
+    for (char c : {'A', 'B', 'C', 'D'}) vp.push_back(c);
+
+    grafo::Lista<grafo::Arista<char>> arbol;
+    cout << "prim peso total MST (esp. 4): " << grafo::prim(gp, vp, arbol) << endl;
+
+    // Prim sobre grafo no conexo -> error
+    Grafo gn;
+    gn.agregarVertice('A');
+    gn.agregarVertice('B');
+    gn.agregarVertice('X');
+    gn.agregarArista('A', 'B', 1.0, false);
+    grafo::Lista<char> vn;
+    vn.push_back('A');
+    vn.push_back('B');
+    vn.push_back('X');
+    grafo::Lista<grafo::Arista<char>> arb2;
+    try {
+        grafo::prim(gn, vn, arb2);
         cout << "ERROR: no deberia existir MST" << endl;
     } catch (const grafo::ErrorGrafo& e) {
-        cout << "No conexo -> capturado: " << e.mensaje() << endl;
+        cout << "prim no conexo -> capturado: " << e.mensaje() << endl;
     }
+
     cout << endl;
 }
 
@@ -443,24 +484,6 @@ void probarCasosLimite() {
     cout << endl;
 }
 
-void probarBFS() {
-    cout << "=== Pruebas de BFS (Amplitud) ===" << endl;
-    grafo::GrafoLista<char> g;
-    g.agregarVertice('A');
-    g.agregarVertice('B');
-    g.agregarVertice('C');
-    g.agregarVertice('D');
-
-    g.agregarArista('A', 'B', 1.0, false);
-    g.agregarArista('A', 'C', 1.0, false);
-    g.agregarArista('B', 'D', 1.0, false);
-
-    grafo::Lista<char> recorrido = grafo::bfs(g, 'A');
-    cout << "Orden BFS desde 'A': ";
-    imprimirLista(recorrido);
-    cout << endl << endl;
-}
-
 int main() {
     probarLista();
     probarListaCopia();
@@ -472,8 +495,8 @@ int main() {
 
     probarGrafos();
 
-    probarOrdenTopologico();
-    probarPrim();
+    probarAlgoritmos<grafo::GrafoLista<char>>("GrafoLista");
+    probarAlgoritmos<grafo::GrafoMatriz<char>>("GrafoMatriz");
     probarCasosLimite();
 
     return 0;
