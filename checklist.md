@@ -66,7 +66,7 @@ Leyenda:
 > `-Wall -Wextra -Wpedantic` (sin warnings) y `-D_GLIBCXX_DEBUG` (sin abortos).
 
 ## 11. Documentación y entrega
-- [ ] `README.md` con ejemplos de uso ("incluir y usar")
-- [ ] Comentarios/doxygen en la API
-- [ ] Commits con formato **Conventional Commits** (ej. `feat: add adjacency list`, `fix: validate out of bounds`)
+- [x] `README.md` con ejemplos de uso ("incluir y usar")
+- [x] Comentarios/doxygen en la API
+- [x] Commits con formato **Conventional Commits** (ej. `feat: add adjacency list`, `fix: validate out of bounds`)
 - [ ] Subir versión final a GitHub
