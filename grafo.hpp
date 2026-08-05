@@ -1600,6 +1600,67 @@ RutasFloydWarshall<T> floydWarshall(const GrafoBase<T>& grafo, const Lista<T>& v
     rutas.calcular(grafo, verticesTotales);
     return rutas;
 }
+
+// ---- 8.1 Verificación de conectividad / Componentes Conexas ----------------
+
+template <typename T>
+Lista<Lista<T>> componentesConexas(const GrafoBase<T>& grafo, const Lista<T>& verticesTotales) {
+    Lista<Lista<T>> componentes;
+    Lista<T> visitados;
+
+    for (auto* n = verticesTotales.primer(); n != nullptr; n = n->siguiente) {
+        const T& vertice = n->dato;
+        
+        // Si el vértice no ha sido visitado, significa que pertenece a un nuevo componente
+        if (!visitados.contiene(vertice)) {
+            // Reutilizamos el BFS del Checklist 6 para descubrir todo el componente
+            Lista<T> componente = bfs(grafo, vertice);
+            
+            // Agregamos este nuevo grupo a nuestra lista de componentes
+            componentes.push_back(componente);
+            
+            // Registramos todos los vértices descubiertos como visitados
+            for (auto* c = componente.primer(); c != nullptr; c = c->siguiente) {
+                if (!visitados.contiene(c->dato)) {
+                    visitados.push_back(c->dato);
+                }
+            }
+        }
+    }
+
+    return componentes;
+}
+// ---- 8.2 Grafo conectado o fuertemente conexo ------------------------------
+
+template <typename T>
+bool esConexo(const GrafoBase<T>& grafo, const Lista<T>& verticesTotales, bool dirigido = false) {
+    // Un grafo sin vértices se considera trivialmente conexo
+    if (verticesTotales.tamano() == 0) {
+        return true; 
+    }
+
+    if (!dirigido) {
+        // Grafo no dirigido: Simplemente conexo
+        // Basta comprobar si desde un (1) vértice se alcanzan todos los demás
+        T inicio = verticesTotales.primer()->dato;
+        Lista<T> alcanzables = bfs(grafo, inicio);
+        
+        return alcanzables.tamano() == verticesTotales.tamano();
+    } else {
+        // Grafo dirigido: Fuertemente conexo
+        // Fuerza bruta: Comprobar que CADA vértice puede alcanzar a TODOS los demás.
+        // Esto evita tener que construir un grafo transpuesto (Kosaraju).
+        for (auto* n = verticesTotales.primer(); n != nullptr; n = n->siguiente) {
+            Lista<T> alcanzables = bfs(grafo, n->dato);
+            
+            if (alcanzables.tamano() != verticesTotales.tamano()) {
+                return false; // Encontramos un vértice que no puede alcanzar al resto
+            }
+        }
+        return true; // Todos alcanzaron a todos
+    }
+}
+
 }  // namespace grafo
 
 #endif  // GRAFO_HPP
