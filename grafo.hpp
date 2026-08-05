@@ -7,37 +7,43 @@
 // Un único archivo; solo <iostream> como librería externa, el resto son
 // estructuras implementadas a mano con nodos y punteros (new/delete).
 
+/// Espacio de nombres principal de la librería.
 namespace grafo {
 
 // ---- Constantes y errores comunes ------------------------------------------
 
-// Valor que representa la ausencia de arista.
+/// Valor centinela que representa la ausencia de arista.
 inline constexpr double INF = 1e300;
 
-// Cota para detectar overflow en sumas.
+/// Cota para detectar overflow en sumas de pesos.
 inline constexpr double MAX_PESO = 1.7e308;
 
+/// Clase base de todos los errores de la librería.
 class ErrorGrafo {
 public:
+    /// Construye un error con un mensaje descriptivo.
     explicit ErrorGrafo(const char* msg) : mensaje_(msg) {}
+    /// Retorna el mensaje del error.
     const char* mensaje() const { return mensaje_; }
 
 private:
     const char* mensaje_;
 };
 
+/// Error lanzado al operar sobre un vértice o arista que no existe.
 class VerticeInexistente : public ErrorGrafo {
 public:
     VerticeInexistente()
         : ErrorGrafo("grafo: el vertice o la arista no existe") {}
 };
 
+/// Error lanzado cuando una suma de pesos se desborda.
 class OverflowPeso : public ErrorGrafo {
 public:
     OverflowPeso() : ErrorGrafo("grafo: desbordamiento en la suma de pesos") {}
 };
 
-// Lanza OverflowPeso si la suma se desborda o un operando es NaN.
+/// Suma segura: lanza OverflowPeso si un operando es NaN o la suma desborda.
 inline double sumaSegura(double a, double b) {
     if (a != a || b != b) throw OverflowPeso();
     if (a > 0 && b > MAX_PESO - a) throw OverflowPeso();
@@ -45,6 +51,7 @@ inline double sumaSegura(double a, double b) {
     return a + b;
 }
 
+/// Valida que un peso sea finito; lanza ErrorGrafo en caso contrario.
 inline void validarPeso(double peso) {
     if (peso != peso || peso >= INF || peso <= -INF) {
         throw ErrorGrafo("grafo: el peso de una arista debe ser finito");
@@ -53,6 +60,8 @@ inline void validarPeso(double peso) {
 
 // ---- Lista<T>: lista enlazada simple ----------------------------------------
 
+/// Lista enlazada simple implementada a mano (sin contenedores STL).
+/// Soporta agregar, insertar, eliminar, buscar y recorrer.
 template <typename T>
 class Lista {
 public:
@@ -73,12 +82,15 @@ public:
         return *this;
     }
 
+    /// Número de elementos de la lista.
     size_t tamano() const { return tam_; }
+    /// Retorna true si la lista no tiene elementos.
     bool vacia() const { return tam_ == 0; }
 
-    // Puntero al primer nodo, para recorrerla manualmente.
+    /// Puntero al primer nodo, para recorrerla manualmente.
     Nodo* primer() const { return cabeza_; }
 
+    /// Índice de 'valor' o -1 si no está presente.
     int indiceDe(const T& valor) const {
         Nodo* n = cabeza_;
         int i = 0;
@@ -90,9 +102,10 @@ public:
         return -1;
     }
 
+    /// Retorna true si 'valor' está en la lista.
     bool contiene(const T& valor) const { return indiceDe(valor) >= 0; }
 
-    // Lanza ErrorGrafo si pos >= tamano().
+    /// Acceso con verificación: lanza ErrorGrafo si pos >= tamano().
     T& at(size_t pos) {
         verificarIndice(pos);
         return nodoEn(pos)->dato;
@@ -106,6 +119,7 @@ public:
     T& operator[](size_t pos) { return at(pos); }
     const T& operator[](size_t pos) const { return at(pos); }
 
+    /// Agrega 'valor' al final de la lista.
     void push_back(const T& valor) {
         Nodo* nuevo = new Nodo{valor, nullptr};
         if (cabeza_ == nullptr) {
@@ -118,11 +132,13 @@ public:
         ++tam_;
     }
 
+    /// Agrega 'valor' al inicio de la lista.
     void push_frente(const T& valor) {
         cabeza_ = new Nodo{valor, cabeza_};
         ++tam_;
     }
 
+    /// Inserta 'valor' en la posición pos (válido 0..tamano()).
     void insertar(size_t pos, const T& valor) {
         verificarPosicion(pos);
         if (pos == 0) {
@@ -134,6 +150,7 @@ public:
         ++tam_;
     }
 
+    /// Elimina el elemento en la posición pos (lanza si está fuera de rango).
     void eliminarPos(size_t pos) {
         verificarIndice(pos);
         Nodo* aEliminar;
@@ -149,6 +166,7 @@ public:
         --tam_;
     }
 
+    /// Elimina la primera aparición de 'valor'. Retorna true si se eliminó.
     bool eliminarValor(const T& valor) {
         const int idx = indiceDe(valor);
         if (idx < 0) return false;
@@ -156,6 +174,7 @@ public:
         return true;
     }
 
+    /// Vacía la lista y libera toda su memoria.
     void limpiar() {
         Nodo* n = cabeza_;
         while (n != nullptr) {
@@ -195,6 +214,7 @@ private:
 
 // ---- Cola<T> (FIFO) y Pila<T> (LIFO) -----------------------------------------
 
+/// Cola FIFO implementada a mano (para BFS).
 template <typename T>
 class Cola {
 public:
@@ -210,6 +230,7 @@ public:
         return *this;
     }
 
+    /// Encola 'valor' al final de la cola.
     void encolar(const T& valor) {
         Nodo* nuevo = new Nodo{valor, nullptr};
         if (fondo_ == nullptr) {
@@ -221,6 +242,7 @@ public:
         ++tam_;
     }
 
+    /// Desencola el frente (lanza si la cola está vacía).
     void desencolar() {
         if (frente_ == nullptr) throw ErrorGrafo("Cola: cola vacia");
         Nodo* aux = frente_;
@@ -240,9 +262,12 @@ public:
         return frente_->dato;
     }
 
+    /// Retorna true si la cola está vacía.
     bool vacia() const { return frente_ == nullptr; }
+    /// Número de elementos en la cola.
     size_t tamano() const { return tam_; }
 
+    /// Vacía la cola y libera su memoria.
     void limpiar() {
         while (frente_ != nullptr) {
             Nodo* aux = frente_;
@@ -271,6 +296,7 @@ private:
     size_t tam_;
 };
 
+/// Pila LIFO implementada a mano (para DFS).
 template <typename T>
 class Pila {
 public:
@@ -286,11 +312,13 @@ public:
         return *this;
     }
 
+    /// Apila 'valor' en el tope.
     void apilar(const T& valor) {
         tope_ = new Nodo{valor, tope_};
         ++tam_;
     }
 
+    /// Desapila el tope (lanza si la pila está vacía).
     void desapilar() {
         if (tope_ == nullptr) throw ErrorGrafo("Pila: pila vacia");
         Nodo* aux = tope_;
@@ -309,9 +337,12 @@ public:
         return tope_->dato;
     }
 
+    /// Retorna true si la pila está vacía.
     bool vacia() const { return tope_ == nullptr; }
+    /// Número de elementos en la pila.
     size_t tamano() const { return tam_; }
 
+    /// Vacía la pila y libera su memoria.
     void limpiar() {
         while (tope_ != nullptr) {
             Nodo* aux = tope_;
@@ -345,36 +376,51 @@ private:
 
 // ---- GrafoBase<T>: Interfaz común para todas las implementaciones -----------
 
+/// Interfaz común para todas las implementaciones de grafo.
+/// Garantiza que GrafoLista y GrafoMatriz compartan la misma API.
 template <typename T>
 class GrafoBase {
 public:
     virtual ~GrafoBase() {}
 
     // --- Modificadores ---
+    /// Agrega un vértice (lanza ErrorGrafo si ya existe).
     virtual void agregarVertice(const T& vertice) = 0;
+    /// Elimina un vértice y sus aristas (lanza VerticeInexistente si no existe).
     virtual void eliminarVertice(const T& vertice) = 0;
-    
+
     // Por defecto asume aristas no ponderadas (peso 1.0) y no dirigidas
+    /// Agrega una arista; peso = 1.0 por defecto y 'dirigida' = false.
+    /// Lanza VerticeInexistente si algún extremo no existe.
     virtual void agregarArista(const T& origen, const T& destino, double peso = 1.0, bool dirigida = false) = 0;
+    /// Elimina una arista (lanza VerticeInexistente si no existe).
     virtual void eliminarArista(const T& origen, const T& destino, bool dirigida = false) = 0;
 
     // --- Consultas básicas ---
+    /// Retorna true si el vértice existe.
     virtual bool existeVertice(const T& vertice) const = 0;
+    /// Retorna true si existe la arista origen -> destino.
     virtual bool existeArista(const T& origen, const T& destino) const = 0;
+    /// Peso de la arista origen -> destino (lanza VerticeInexistente si no hay).
     virtual double obtenerPeso(const T& origen, const T& destino) const = 0;
 
     // --- Métricas ---
+    /// Número de vértices del grafo.
     virtual int numVertices() const = 0;
+    /// Número de aristas del grafo.
     virtual int numAristas() const = 0;
+    /// Grado de salida del vértice (lanza VerticeInexistente si no existe).
     virtual int grado(const T& vertice) const = 0;
 
     // --- Vecinos / Conexiones ---
-    // Retorna una Lista<T> (nuestra estructura manual) con los vértices adyacentes
+    /// Retorna una Lista<T> con los vértices adyacentes al vértice dado.
     virtual Lista<T> obtenerVecinos(const T& vertice) const = 0;
 };
 
 // ---- GrafoLista<T>: Implementación mediante Lista de Adyacencia ------------
 
+/// Implementación del grafo con lista de adyacencia: cada vértice mantiene una
+/// sub-lista enlazada con sus aristas salientes.
 template <typename T>
 class GrafoLista : public GrafoBase<T> {
 private:
@@ -687,6 +733,8 @@ private:
 };
 // ---- GrafoMatriz<T>: Implementación mediante Matriz de Adyacencia ------------
 
+/// Implementación del grafo con matriz de adyacencia redimensionable
+/// (los vértices se mapean por índice en una Lista<T> lineal).
 template <typename T>
 class GrafoMatriz : public GrafoBase<T> {
 private:
@@ -979,6 +1027,9 @@ public:
 };
 // ---- Algoritmo BFS (Búsqueda en Anchura) -----------------------------------
 
+/// Recorrido en amplitud desde 'inicio'.
+/// @return Lista con el orden en que se visitan los vértices.
+/// @throws VerticeInexistente si 'inicio' no pertenece al grafo.
 template <typename T>
 Lista<T> bfs(const GrafoBase<T>& grafo, const T& inicio) {
     if (!grafo.existeVertice(inicio)) {
@@ -1012,6 +1063,9 @@ Lista<T> bfs(const GrafoBase<T>& grafo, const T& inicio) {
 }
 // ---- Algoritmo DFS (Búsqueda en Profundidad) -------------------------------
 
+/// Recorrido en profundidad desde 'inicio'.
+/// @return Lista con el orden en que se visitan los vértices.
+/// @throws VerticeInexistente si 'inicio' no pertenece al grafo.
 template <typename T>
 Lista<T> dfs(const GrafoBase<T>& grafo, const T& inicio) {
     if (!grafo.existeVertice(inicio)) {
@@ -1092,6 +1146,9 @@ bool tieneCicloUtilNoDirigido(const T& actual, const T& padre, const GrafoBase<T
     return false;
 }
 
+/// Detecta si el grafo contiene un ciclo alcanzable desde 'inicio'.
+/// @param dirigida true si el grafo se interpreta como dirigido.
+/// @throws VerticeInexistente si 'inicio' no pertenece al grafo.
 template <typename T>
 bool tieneCiclo(const GrafoBase<T>& grafo, const T& inicio, bool dirigida = false) {
     if (!grafo.existeVertice(inicio)) {
@@ -1118,6 +1175,9 @@ bool tieneCiclo(const GrafoBase<T>& grafo, const T& inicio, bool dirigida = fals
 }
 // ---- Camino más corto: BFS para grafos no ponderados -----------------------
 
+/// Camino más corto entre 'inicio' y 'destino' usando BFS (grafos no ponderados).
+/// @return Lista con los vértices del camino, o lista vacía si no hay camino.
+/// @throws VerticeInexistente si algún extremo no existe.
 template <typename T>
 Lista<T> caminoBfsNoPonderado(const GrafoBase<T>& grafo, const T& inicio, const T& destino) {
     if (!grafo.existeVertice(inicio) || !grafo.existeVertice(destino)) {
@@ -1194,6 +1254,9 @@ Lista<T> caminoBfsNoPonderado(const GrafoBase<T>& grafo, const T& inicio, const 
 
 // ---- Camino más corto: Algoritmo de Dijkstra -------------------------------
 
+/// Camino más corto entre 'inicio' y 'destino' con pesos no negativos.
+/// @return Lista con los vértices del camino, o lista vacía si es inalcanzable.
+/// @throws OverflowPeso si una suma se desborda, VerticeInexistente si un extremo no existe.
 template <typename T>
 Lista<T> dijkstra(const GrafoBase<T>& grafo, const T& inicio, const T& destino) {
     if (!grafo.existeVertice(inicio) || !grafo.existeVertice(destino)) {
@@ -1313,6 +1376,9 @@ Lista<T> dijkstra(const GrafoBase<T>& grafo, const T& inicio, const T& destino) 
 
 // ---- Camino más corto: Algoritmo de Bellman-Ford ---------------------------
 
+/// Camino más corto entre 'inicio' y 'destino' soportando aristas negativas.
+/// @return Lista con los vértices del camino, o lista vacía si es inalcanzable.
+/// @throws ErrorGrafo si se detecta un ciclo de peso negativo.
 template <typename T>
 Lista<T> bellmanFord(const GrafoBase<T>& grafo, const T& inicio, const T& destino) {
     if (!grafo.existeVertice(inicio) || !grafo.existeVertice(destino)) {
@@ -1451,6 +1517,8 @@ Lista<T> bellmanFord(const GrafoBase<T>& grafo, const T& inicio, const T& destin
 
 // ---- Camino más corto: Algoritmo de Floyd-Warshall (Todos los pares) -------
 
+/// Resultado de Floyd-Warshall: permite consultar distancias y caminos
+/// entre cualquier par de vértices.
 template <typename T>
 class RutasFloydWarshall {
 private:
@@ -1521,6 +1589,8 @@ public:
     }
 
     // Ejecución del algoritmo
+    /// Calcula todos los caminos mínimos entre los pares de vértices.
+    /// @throws ErrorGrafo si se detecta un ciclo de peso negativo.
     void calcular(const GrafoBase<T>& grafo, const Lista<T>& verticesTotales) {
         vertices_ = verticesTotales;
         liberarMemoria();
@@ -1568,6 +1638,8 @@ public:
 
     // --- Consultas posteriores al cálculo ---
 
+    /// Distancia mínima entre 'origen' y 'destino' (INF si no hay ruta).
+    /// @throws VerticeInexistente si algún extremo no existe.
     double obtenerDistancia(const T& origen, const T& destino) const {
         int i = vertices_.indiceDe(origen);
         int j = vertices_.indiceDe(destino);
@@ -1575,6 +1647,8 @@ public:
         return dist_[i][j];
     }
 
+    /// Camino mínimo entre 'origen' y 'destino' (vacío si no hay ruta).
+    /// @throws VerticeInexistente si algún extremo no existe.
     Lista<T> obtenerCamino(const T& origen, const T& destino) const {
         int i = vertices_.indiceDe(origen);
         int j = vertices_.indiceDe(destino);
@@ -1594,6 +1668,7 @@ public:
 };
 
 // Función envoltorio limpia para integrarse con el estilo de la librería
+/// Calcula los caminos mínimos de todos los pares y devuelve el objeto de consulta.
 template <typename T>
 RutasFloydWarshall<T> floydWarshall(const GrafoBase<T>& grafo, const Lista<T>& verticesTotales) {
     RutasFloydWarshall<T> rutas;
@@ -1603,6 +1678,8 @@ RutasFloydWarshall<T> floydWarshall(const GrafoBase<T>& grafo, const Lista<T>& v
 
 // ---- 8.1 Verificación de conectividad / Componentes Conexas ----------------
 
+/// Divide los vértices en componentes conexas (BFS desde cada vértice no visitado).
+/// @return Lista de componentes; cada componente es una Lista<T> de vértices.
 template <typename T>
 Lista<Lista<T>> componentesConexas(const GrafoBase<T>& grafo, const Lista<T>& verticesTotales) {
     Lista<Lista<T>> componentes;
@@ -1632,6 +1709,8 @@ Lista<Lista<T>> componentesConexas(const GrafoBase<T>& grafo, const Lista<T>& ve
 }
 // ---- 8.2 Grafo conectado o fuertemente conexo ------------------------------
 
+/// Verifica si el grafo es conexo (no dirigido) o fuertemente conexo (dirigido).
+/// Un grafo vacío se considera conexo por definición.
 template <typename T>
 bool esConexo(const GrafoBase<T>& grafo, const Lista<T>& verticesTotales, bool dirigido = false) {
     // Un grafo sin vértices se considera trivialmente conexo
@@ -1663,10 +1742,10 @@ bool esConexo(const GrafoBase<T>& grafo, const Lista<T>& verticesTotales, bool d
 
 // ---- 8.3 Orden topológico (grafo dirigido acíclico) ------------------------
 
-// Retorna un orden lineal de los vértices tal que si existe la arista
-// origen -> destino, entonces 'origen' aparece antes que 'destino'.
-// Algoritmo de Kahn (colas). Lanza ErrorGrafo si el grafo tiene un ciclo,
-// ya que en ese caso no existe orden topológico.
+/// Orden lineal tal que si existe la arista origen -> destino, 'origen' aparece
+/// antes que 'destino'. Algoritmo de Kahn (colas).
+/// @return Lista con el orden topológico de los vértices.
+/// @throws ErrorGrafo si el grafo tiene un ciclo (no existe tal orden).
 template <typename T>
 Lista<T> ordenTopologico(const GrafoBase<T>& grafo, const Lista<T>& verticesTotales) {
     // Estructura auxiliar: vértice y su grado de entrada actual
@@ -1735,11 +1814,14 @@ Lista<T> ordenTopologico(const GrafoBase<T>& grafo, const Lista<T>& verticesTota
 
 // ---- 8.4 Árbol de expansión mínima (Prim) -----------------------------------
 
-// Arista genérica usada para reportar el resultado del árbol de expansión.
+/// Arista genérica usada para reportar el resultado del árbol de expansión.
 template <typename T>
 struct Arista {
+    /// Vértice de origen.
     T origen;
+    /// Vértice de destino.
     T destino;
+    /// Peso de la arista.
     double peso;
 
     bool operator==(const Arista& otra) const {
@@ -1748,10 +1830,10 @@ struct Arista {
     }
 };
 
-// Algoritmo de Prim (O(V^2)) para grafos ponderados NO dirigidos.
-// Retorna el peso total del árbol de expansión mínima y deja en 'arbolMST'
-// la lista de aristas que lo forman. Lanza ErrorGrafo si el grafo no es
-// conexo (no existe tal árbol) o si hay overflow en la suma de pesos.
+/// Árbol de expansión mínima con el algoritmo de Prim (O(V^2)).
+/// @param arbolMST Salida: lista de aristas que forman el árbol.
+/// @return Peso total del árbol (0 para un grafo vacío).
+/// @throws ErrorGrafo si el grafo no es conexo o hay overflow en las sumas.
 template <typename T>
 double prim(const GrafoBase<T>& grafo, const Lista<T>& verticesTotales,
             Lista<Arista<T>>& arbolMST) {
